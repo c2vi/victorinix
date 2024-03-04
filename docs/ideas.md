@@ -11,6 +11,9 @@ I want the one static executable, that you download to know where the folder it 
 ## "Registering" things with the system.
 Being fully portable is a main goal, but sometimes you just need to install/register something to/with your system. eg: a url handler, to log into any of those modern apps, that redirect you to the browser in order to log in. Se there will be a feature, to register things with your system, eg: install a program to /bin/. But each of those registrations will be fully tracked (you'll know exactly, what Victorinix changed about your system) in order to be completely reversible.
 
+### Inspiration from snaps and flatpacks
+A snap package has "plugs and slots" ... that snaps can have... this is the thing, i want to do as well: run systems more isolated and define interfaces between them ... eg a sock file, dbus paths, ....
+
 ## The nix privision part
 I am a keen NixOS user, but there is one thing that bothers me about it. In order to install my system, I first need to format the disks the way they are specified in the config. I want a "system config" to be a thing, where I can run one command which i give a disk and then after booting this disk, i have my exact system.
 
@@ -53,6 +56,77 @@ The end goal is that anything you would want to do on your system, you could jus
     - wait
     - done
     - if it's the running disk, this will make some space at the end of the disk (or somewhere else on it), install a tiny linux distro onto it, copy the selected config to it and tell the firmware to boot that partition, this distro will copy itself completely to ram on boot and then install the selected config onto the drive.
+
+
+# Programs to package portably
+- incus
+- podman
+- docker
+- wine apps and windows apps (for the windows versio of it)
+    - altium
+    - fusion
+
+## package programs protably with their config
+Programs packaged as an victorinix item have options, where you can configure them. 
+
+### home-manager programs standalone
+Programs from just nixpkgs do not have that. The established way to configure programs with nix is home-manager. So make a nix func, that takes a home.nix and turns it into a attrset with programs, that you can run. This will work, with turning the home.nix into one, with only that program configured and some mount namespcae magic, to write config files for this program into an overlayfs with the activation script from home-manager.
+
+With such a mount namespcae hack also a one-command home-manager env should be able to run.
+
+# WIP: brainstorming
+## command line interface
+- eg: `vic run firefox`
+    - should run the newest firefox from nixpkgs, basically: `nix run nixpkgs#firefox`
+- eg: `vic run github:c2vi/nixos#cbm`
+    - should run the cbm program i packaged
+- eg: `vic run ubuntu -o vm,gui -n "{...}: {gui=true;}"`
+    - should run a vm of the ubuntu distribution
+    - with -n you can define a nix func, that returns options for this item
+    - with -o you can set those options more quickly. "-o vm" would be the same as "-n '{...}:{vm=true;}'"
+    - -o sshkey should empty the list of ssh keys
+    - -o sshkey=$key should set the ssh keys to this one
+    - to add a key: -n "{config, ...}: {sshkey=config.sshkey ++ ['$key']}"
+- eg: vic run debian
+    ⁻ should drop you into the shell of a debian container
+- eg: vic run github:c2vi/nxios
+    - should run the default nixosConfiguration of this flake, as a docker container, with systemd and gui (if the config has services.xserver set) as a window.....
+- vic run -e
+    - edit the default options in editor set in the editor option of vic itself ... this option should default to $EDITOR
+    - recommended options, mandatory options, options from env should be at the top
+- vic get
+    - same as run, but downloads it, so that running would be faster
+    - for things that get config, you can configure them here
+- vic stat
+    - show gotten items, their closure size, what would be freed by `vic nix store gc`
+    - size of app-data folders
+- vic list app-data
+    - list app-data folders
+- vic list installed
+- vic list registrations
+- vic list daemons
+- vic gui
+    - should run the gui
+- shortcuts with only few letters!!!!
+
+## option interfaces
+Victorinix items like ubuntu, debian, nixos,  .... aka linux distros all will have some common options like vm, gui, username, pwd, rootpwd, .... The list of those options forms an victorinix type, in this case linuxDistro.
+
+## types
+- linuxDistro
+- nixpkgsProgram
+- aurProgram
+- nixDeriviation
+- provision
+- vm
+- runnable
+- daemonizable
+- buildable
+
+## the victorinix env options
+In order to not add common options like sshkey all the time to your vms, you can set an option in a so called victorinix environment, and those options will automatically be applied to items that support those. (as a layer over default options, but underneath options set by the user, so you can overwrite those with -o sshkey)
+
+
 
 
 
