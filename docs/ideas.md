@@ -65,6 +65,7 @@ The end goal is that anything you would want to do on your system, you could jus
 - wine apps and windows apps (for the windows versio of it)
     - altium
     - fusion
+- ross (robotic communication)
 
 ## package programs protably with their config
 Programs packaged as an victorinix item have options, where you can configure them. 
@@ -73,6 +74,8 @@ Programs packaged as an victorinix item have options, where you can configure th
 Programs from just nixpkgs do not have that. The established way to configure programs with nix is home-manager. So make a nix func, that takes a home.nix and turns it into a attrset with programs, that you can run. This will work, with turning the home.nix into one, with only that program configured and some mount namespcae magic, to write config files for this program into an overlayfs with the activation script from home-manager.
 
 With such a mount namespcae hack also a one-command home-manager env should be able to run.
+
+- or take inspiration from this: https://gist.github.com/siph/288b7c6b5f68a1902d28aebc95fde4c5#bonus-lazy-method
 
 # WIP: brainstorming
 ## command line interface
@@ -122,6 +125,9 @@ Victorinix items like ubuntu, debian, nixos,  .... aka linux distros all will ha
 - runnable
 - daemonizable
 - buildable
+- oci-container
+- instruction
+- script
 
 ## the victorinix env options
 In order to not add common options like sshkey all the time to your vms, you can set an option in a so called victorinix environment, and those options will automatically be applied to items that support those. (as a layer over default options, but underneath options set by the user, so you can overwrite those with -o sshkey)
