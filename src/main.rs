@@ -73,29 +73,28 @@ fn init_logger(cli_matches: &ArgMatches) {
 
     // set loglevel
     let mut log_level = DEFAULT_LOG_LEVEL;
-    log_messages.push((Level::Trace, format!("set log level from DEFAULT_LOG_LEVEL to {}", DEFAULT_LOG_LEVEL)));
+    log_messages.push((Level::Trace, format!("set log level to {} as specified by DEFAULT_LOG_LEVEL in the src/main.rs", DEFAULT_LOG_LEVEL)));
 
     // check env RUST_LOG
     let mut val_rust_log = level_from_env("RUST_LOG", log_level);
-    if let Some(level_rust_log) = val_rust_log.0 {
-        // TODO: this is ignored
-        log_level = level_rust_log;
+    log_level = if let Some(level_rust_log) = val_rust_log.0 {
         log_messages.push((Level::Trace, format!("set log level from the Variable RUST_LOG to {}", level_rust_log)));
-    }
+        level_rust_log
+    } else {log_level};
     log_messages.append(&mut val_rust_log.1);
 
     // check env VICTORINIX_LOG
     let mut val_victorinix_log = level_from_env("VICTORINIX_LOG", log_level);
-    if let Some(level_victorinix_log) = val_victorinix_log.0 {
-        // TODO: this is ignored
-        log_level = level_victorinix_log;
+    log_level = if let Some(level_victorinix_log) = val_victorinix_log.0 {
         log_messages.push((Level::Trace, format!("set log level from the Variable VICTORINIX_LOG to {}", level_victorinix_log)));
-    }
+        level_victorinix_log
+    } else {log_level};
     log_messages.append(&mut val_victorinix_log.1);
+
 
     // check -vvvvv flags
     let v_flag_count = cli_matches.get_count("verbose");
-    let default_log_level_as_num = match DEFAULT_LOG_LEVEL {
+    let old_log_level_as_num = match log_level {
         LevelFilter::Off => 0,
         LevelFilter::Error => 1,
         LevelFilter::Warn => 2,
@@ -103,7 +102,8 @@ fn init_logger(cli_matches: &ArgMatches) {
         LevelFilter::Debug => 4,
         LevelFilter::Trace => 5,
     };
-    let new_log_level_num = default_log_level_as_num + v_flag_count;
+    let new_log_level_num = old_log_level_as_num + v_flag_count;
+
     log_level = match new_log_level_num {
         0 => LevelFilter::Off,
         1 => LevelFilter::Error,
@@ -117,12 +117,14 @@ fn init_logger(cli_matches: &ArgMatches) {
         },
     };
     log_messages.push((Level::Trace, format!("set log level from the verbose flags to {}", log_level)));
+
  
     // check --log-level arg
-    if let Some(log_level_arg_string) = cli_matches.get_one::<&str>("log-level") {
+    if let Some(log_level_arg_string) = cli_matches.get_one::<String>("log-level") {
         let log_level_from_arg = match log_level_arg_string.to_lowercase().as_str() {
             "none" => LevelFilter::Off,
             "trace" => LevelFilter::Trace,
+            "all" => LevelFilter::Trace,
             "debug" => LevelFilter::Debug,
             "info" => LevelFilter::Info,
             "warn" => LevelFilter::Warn,
