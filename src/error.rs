@@ -3,7 +3,7 @@ pub type VicResult<T> = Result<T, VicError>;
 
 #[derive(Debug)]
 pub struct VicError {
-    msg: String,
+    pub msg: String,
 } 
 
 impl From<libelf::Error> for VicError {
