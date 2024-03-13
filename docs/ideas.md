@@ -41,8 +41,13 @@ The end goal is that anything you would want to do on your system, you could jus
 - CVEs
 - [grepper answers](https://www.grepper.com/)
 - NixOS options
-- programs (from nixpkgs and debian)
+- programs (from nixpkgs, debian, and many other distros)
 - debian packages
+- mac and ios app store
+- google play-store
+- windows store
+- winget
+- this flakehub
 
 ## Improved NixOS Module System
 
@@ -66,6 +71,7 @@ The end goal is that anything you would want to do on your system, you could jus
     - altium
     - fusion
 - ross (robotic communication)
+- multisim
 
 ## package programs protably with their config
 Programs packaged as an victorinix item have options, where you can configure them. 
@@ -112,7 +118,7 @@ With such a mount namespcae hack also a one-command home-manager env should be a
     - should run the gui
 - shortcuts with only few letters!!!!
 
-## option interfaces
+## option types
 Victorinix items like ubuntu, debian, nixos,  .... aka linux distros all will have some common options like vm, gui, username, pwd, rootpwd, .... The list of those options forms an victorinix type, in this case linuxDistro.
 
 ## types
@@ -133,8 +139,48 @@ Victorinix items like ubuntu, debian, nixos,  .... aka linux distros all will ha
 In order to not add common options like sshkey all the time to your vms, you can set an option in a so called victorinix environment, and those options will automatically be applied to items that support those. (as a layer over default options, but underneath options set by the user, so you can overwrite those with -o sshkey)
 
 
+# inspiration
+- kasmweb: stream docker containers with desktop env to the browser
+- vagrant: vm management software from HashiCorp
 
 
+# victorinix concepts
+## items
+The things that you find when searching, can be run, instantiated, built, ... Always have options to configure them.
 
+## options
+For any item, you can configure the way it is run/built/... by setting certain options.
+
+## types
+A set of options. I an item has this type, it has all the options of this type. An item can have multiple types.
+
+## instances
+A thing that represents an output of an item. Can be runnable as a daemon, can have app-data stored with it, ...
+
+## connections or plugs
+Instances are mostly isolated. But some communication or shared resources are needed between them. So you eg connect your dbus into this instance, so that it can use it for bluetooth.
+
+## env
+A set of parameters, that describe your current system. eg: `env.os = "linux"`. Items can then require certain parameters of a system, eg programs that only run on windows require env.os to be "windows".
+
+## transformations
+If you want to run an item, that requires `env.os = "windows"`, but your current system is linux. A transformation describes ways to get from `env.os = windows` to `env.os = "linux"`. One way for that would be to start a vm (which would be done by a different item, that optionally requires `env.linux.kvm = true`), another to use wine.
+
+## registrations
+Victorinix should be fully portable, but sometimes you need/want to install things into your os. (eg url handlers, add a binary to the PATH, ...). Registrations are the only way victorinix changes your host os, and they are always fully reversible and you can view them to know exactly, what victorinix has changed about your system.
+
+
+# config vs secrets vs build-inputs vs app-data
+## config
+Everything that says how an item should be instantiated.
+
+## secrets
+Strings, that are supposed to be secret. Like passwords, keys, ... They should not appear in any config, so that you can share your configs.
+
+## build-inputs
+Program files, ....
+
+## app-data
+Things that are created, while running an item and associated with this instance. Like minecraft Worlds, or if you instantiate a windows vm, all the things you install into that, are part of app-data.
 
 
