@@ -6,6 +6,12 @@ pub struct VicError {
     pub msg: String,
 } 
 
+impl VicError {
+    pub fn msg<T: Into<String>>(msg: T) -> VicError {
+        VicError { msg: msg.into() }
+    }
+}
+
 impl From<libelf::Error> for VicError {
     fn from(value: libelf::Error) -> Self {
         let string = format!("{}", value);

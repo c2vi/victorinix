@@ -69,20 +69,21 @@ impl Props {
             return VicResult::Err(VicError {msg: format!("ELF library initialization failed: {}", str_slice)});
         }
 
-        //let mut elf = Elf::from_bytes(&elf_bytes)?;
-        let mut elf = Elf::open("/home/me/work/tori-victorinix/target/debug/victorinix")?;
-        println!("elf: {:?}", elf);
+        let mut elf = Elf::from_bytes(&elf_bytes)?;
+        //let mut elf = Elf::open("/home/me/work/tori-victorinix/target/debug/victorinix")?;
+        //println!("elf: {:?}", elf);
 
         let kind = unsafe { libelf::raw::elf_kind(elf.as_ptr()) };
-        println!("elf_kind: {}", kind);
+        //println!("elf_kind: {}", kind);
 
             //let header = libelf::raw::elf32_getehdr(elf.as_ptr());
             //println!("elf type: {}", (*header).e_type)
 
         let props_section = get_props_section(elf.as_ptr())?;
+        //println!("props_section: {}", props_section);
 
         let elf_scn = unsafe {libelf::raw::elf_getscn(elf.as_ptr(), props_section) };
-        println!("elf_scn: {:?}", elf_scn);
+
 
         let mut elf_data = Elf_Data {
             //d_buf: *mut c_void,
@@ -94,9 +95,31 @@ impl Props {
             d_align: 0,
         };
 
+
+        let mut elf_shdr = Elf64_Shdr {
+            sh_name: 0,
+            sh_type: 0,
+            sh_flags: 0,
+            sh_addr: 0,
+            sh_offset: 0,
+            sh_size: 0,
+            sh_link: 0,
+            sh_info: 0,
+            sh_addralign: 0,
+            sh_entsize: 0,
+        };
+        let elf_scn_hdr = unsafe {libelf::raw::gelf_getshdr(elf_scn, &mut elf_shdr) };
+        //unsafe { println!("shname: {}", elf_shdr.sh_name);}
+
+
         let new_elf_data = unsafe { libelf::raw::elf_getdata(elf_scn, &mut elf_data)};
 
+        let data = my_getdata(elf, props_section);
+
+        println!("hi data: {:?}", data);
+
         unsafe {
+
             //let new = *new_elf_data;
 
             println!("elf_data: {:?}", new_elf_data);
@@ -158,7 +181,7 @@ fn get_props_section(elfptr: *mut libelf::raw::Elf) -> VicResult<usize> {
         //println!("here");
         let c_str: &CStr = unsafe { CStr::from_ptr(c_buf) };
         let str_slice: &str = c_str.to_str().unwrap();
-        println!("section name: {}", str_slice);
+        //println!("section name: {}", str_slice);
 
         if str_slice == ".victorinix_props" { return Ok(counter); }
 
@@ -169,5 +192,42 @@ fn get_props_section(elfptr: *mut libelf::raw::Elf) -> VicResult<usize> {
 
     unreachable!()
 }
+
+fn my_getdata(elf: Elf, props_section: usize) -> VicResult<Vec<u8>> {
+
+    let props_section_i32 = props_section.try_into().map_err(|_|VicError::msg("Could not convert props_section from usize to i32"))?;
+
+    let data_returned = unsafe { my_getdata_c(elf.as_ptr(), props_section_i32) };
+    println!("hi after");
+    let data_ptr = data_returned.data_ptr;
+    let data_len = data_returned.data_len;
+    let err_ptr = data_returned.err_ptr;
+
+    // check if err_ptr is an empty string
+    let c_str: &CStr = unsafe { CStr::from_ptr(err_ptr) };
+    let str_slice: &str = c_str.to_str().map_err(|_|VicError::msg("Could not convert the CStr to a str"))?;
+    if str_slice != "" {
+        return Err(VicError::msg(format!("my_getdata_c returned an error: {}", str_slice)));
+    }
+
+    let data = unsafe {std::slice::from_raw_parts(data_ptr, data_len as usize)}; 
+
+    return Ok(data.to_vec());
+
+}
+
+#[link(name = "victorinix")]
+extern "C" { 
+    fn my_getdata_c(elf: *mut libelf::raw::Elf, props_section: i32) -> MyGetdataCReturn;
+}
+
+
+#[repr(C)]
+pub struct MyGetdataCReturn {
+    data_ptr: *const u8,
+    data_len: i32,
+    err_ptr: *const c_char,
+}
+
 
 
