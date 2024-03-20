@@ -72,6 +72,12 @@ The end goal is that anything you would want to do on your system, you could jus
     - fusion
 - ross (robotic communication)
 - multisim
+- raspi images as a vm
+- python
+    - a python pip venv
+    - or a pyton nix env ... where you can also add pip and anaconda packages
+- linix distros runnin in container with windowed Xserver
+- gnome, kde, xfce that start as a windowed Xserver
 
 ## package programs protably with their config
 Programs packaged as an victorinix item have options, where you can configure them. 
