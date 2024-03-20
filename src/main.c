@@ -15,6 +15,31 @@
 
 #include <string.h>
 
+void test(int fd_from_rust){
+
+	Elf *e;
+	Elf_Scn * scn;
+
+	//FILE* fd = fopen("/home/me/work/tori-victorinix/victorinix", "r");
+	int fd = open("/home/me/work/tori-victorinix/victorinix", O_RDONLY , 0);
+
+	printf("hiiiiiiii from C: %d \n", fd);
+	//printf("hiiiiiiii from C: %d \n", fd_from_rust);
+	//if (fd < 0)
+		//errx(EXIT_FAILURE , "open failed");
+
+	return;
+	e = elf_begin(3, ELF_C_RDWR, NULL);
+	printf("elf from C: %d \n", e);
+	if (e == NULL)
+		errx(EXIT_FAILURE , "elf_begin ()␣failed:␣%s.", elf_errmsg ( -1));
+
+	if ((scn = elf_getscn(e, 29)) == NULL)
+		errx(EXIT_FAILURE , "getscn failed from C: ", elf_errmsg ( -1));
+
+	printf("scn from C: 0x%x\n", scn);
+}
+
 struct MyGetdataCReturn {
 	unsigned char * data_ptr;
 	int data_len;

@@ -12,9 +12,9 @@ use colored::Colorize;
 use log::{trace, debug, info, warn, error};
 use std::ffi::{c_char, CStr};
 
-use crate::elf_modification::Props;
+use crate::elf_props::Props;
 
-mod elf_modification;
+mod elf_props;
 mod error;
 
 static APPNAME: &str = "vic";
