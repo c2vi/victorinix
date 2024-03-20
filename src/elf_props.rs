@@ -1,9 +1,12 @@
 use json;
 use std::env;
 use std::fs;
+use std::os::fd::AsFd;
+use std::os::fd::AsRawFd;
 use libelf::Elf;
 use std::ffi::c_char;
 use std::ffi::CStr;
+use std::fs::File;
 use libelf::raw::{Elf64_Shdr, Elf_Data};
 
 use crate::error::VicError;
@@ -52,10 +55,10 @@ impl Props {
 
         let exe = env::current_exe()?;
 
-        //let tmp = exe.with_extension("tmp");
-        //fs::copy(&exe, &tmp).expect("couldn't copy exe file");
+        let tmp = exe.with_extension("tmp");
+        fs::copy(&exe, &tmp).expect("couldn't copy exe file");
 
-        let elf_bytes = fs::read(&exe)?;
+        //let elf_bytes = fs::read(&exe)?;
 
         // initialise elf version
         let result = unsafe { libelf::raw::elf_version(libelf::raw::EV_CURRENT) };
@@ -69,20 +72,40 @@ impl Props {
             return VicResult::Err(VicError {msg: format!("ELF library initialization failed: {}", str_slice)});
         }
 
-        let mut elf = Elf::from_bytes(&elf_bytes)?;
+        //let mut elf = Elf::from_bytes(&elf_bytes)?;
         //let mut elf = Elf::open("/home/me/work/tori-victorinix/target/debug/victorinix")?;
         //println!("elf: {:?}", elf);
 
-        let kind = unsafe { libelf::raw::elf_kind(elf.as_ptr()) };
-        //println!("elf_kind: {}", kind);
+        // we need to initialise it ourselve, because we need to pass ELF_C_RDWR to elf_begin and
+        // the rust lib passes ELF_C_READ_MMAP which fails
+        // and with the elf_memory() inside Elf::from_bytes() the elf_getdata just does not work
+        //let raw_fd = File::open("/home/me/work/tori-victorinix/victorinix")?.as_raw_fd();
+        //println!("raw_fd: {}", raw_fd);
+        unsafe {
+            test(3)
+        }
 
-            //let header = libelf::raw::elf32_getehdr(elf.as_ptr());
-            //println!("elf type: {}", (*header).e_type)
+        let raw_elf = unsafe { libelf::raw::elf_begin(3, libelf::raw::Elf_Cmd::ELF_C_RDWR, std::ptr::null_mut())};
+        if raw_elf == std::ptr::null_mut() {
+            let c_buf: *const c_char = unsafe { libelf::raw::elf_errmsg(-1) };
+            let c_str: &CStr = unsafe { CStr::from_ptr(c_buf) };
+            let str_slice: &str = c_str.to_str().unwrap();
+            println!("elf_begin failed: {}", str_slice);
+        }
+        //let mut elf = unsafe {Elf::from_raw(raw_elf)};
 
-        let props_section = get_props_section(elf.as_ptr())?;
+        let kind = unsafe { libelf::raw::elf_kind(raw_elf) };
+
+        println!("elf_kind rust: {}", kind);
+
+        let elf_scn = unsafe {libelf::raw::elf_getscn(raw_elf, 5) };
+        println!("got scn rust: {:?}", elf_scn);
+
+
+        let props_section = get_props_section(raw_elf)?;
         //println!("props_section: {}", props_section);
 
-        let elf_scn = unsafe {libelf::raw::elf_getscn(elf.as_ptr(), props_section) };
+        let elf_scn = unsafe {libelf::raw::elf_getscn(raw_elf, props_section) };
 
 
         let mut elf_data = Elf_Data {
@@ -114,9 +137,9 @@ impl Props {
 
         let new_elf_data = unsafe { libelf::raw::elf_getdata(elf_scn, &mut elf_data)};
 
-        let data = my_getdata(elf, props_section);
+        //let data = my_getdata(elf, props_section);
 
-        println!("hi data: {:?}", data);
+        //println!("hi data: {:?}", data);
 
         unsafe {
 
@@ -148,7 +171,7 @@ fn get_props_section(elfptr: *mut libelf::raw::Elf) -> VicResult<usize> {
     while true {
 
         let elf_scn = unsafe {libelf::raw::elf_getscn(elfptr, counter) };
-        //println!("got scn: {:?}", elf_scn);
+        println!("got scn: {:?}", elf_scn);
 
         let mut elf_shdr = Elf64_Shdr {
             sh_name: 0,
@@ -174,7 +197,9 @@ fn get_props_section(elfptr: *mut libelf::raw::Elf) -> VicResult<usize> {
         // result should be 0, otherwise an error occured
         //println!("elf_shdrstrndx: {}", shstrndx);
 
+        println!("shstrndx: {:?}", shstrndx);
         let c_buf: *const c_char = unsafe { libelf::raw::elf_strptr(elfptr, shstrndx.try_into().unwrap(), elf_shdr.sh_name.try_into().unwrap()) };
+        println!("c_buf: {:?}", c_buf);
 
         //let c_buf: *mut c_char = unsafe { libelf::raw::elf_strptr(elfptr, 42, 72) };
         //println!("c_buf: {:?}", c_buf);
@@ -193,6 +218,7 @@ fn get_props_section(elfptr: *mut libelf::raw::Elf) -> VicResult<usize> {
     unreachable!()
 }
 
+/*
 fn my_getdata(elf: Elf, props_section: usize) -> VicResult<Vec<u8>> {
 
     let props_section_i32 = props_section.try_into().map_err(|_|VicError::msg("Could not convert props_section from usize to i32"))?;
@@ -222,11 +248,18 @@ extern "C" {
 }
 
 
+
 #[repr(C)]
 pub struct MyGetdataCReturn {
     data_ptr: *const u8,
     data_len: i32,
     err_ptr: *const c_char,
+}
+*/
+
+#[link(name = "victorinix")]
+extern "C" { 
+    fn test(fd: i32);
 }
 
 
