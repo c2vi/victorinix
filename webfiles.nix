@@ -13,6 +13,7 @@ stdenv.mkDerivation rec {
   victorinix-l = let pkgs = nixpkgs.legacyPackages.x86_64-linux.pkgsMusl; in pkgs.rustPlatform.buildRustPackage rec {
     name = "victorinix-l";
     buildInputs = with pkgs; [ libelf ];
+    RUSTFLAGS = "-C target-feature=+crt-static";
     src = self;
     #cargoSha256 = "sha256-T9Zb8wtL4cJi23u5IXxJ2qb44IzZO6LO6sXOqTj1S0Q=";
     cargoSha256 = "sha256-TaQWt3sh/TrWmNdvEGH0mIoQp0kOO2TUlVRfyoMDWZI=";
@@ -22,6 +23,7 @@ stdenv.mkDerivation rec {
   victorinix-la = let pkgs = nixpkgs.legacyPackages.x86_64-linux.pkgsCross.aarch64-multiplatform; in pkgs.rustPlatform.buildRustPackage rec {
     name = "victorinix-la";
     buildInputs = with pkgs; [ libelf ];
+    RUSTFLAGS = "-C target-feature=+crt-static";
     src = self;
     cargoSha256 = "sha256-T9Zb8wtL4cJi23u5IXxJ2qb44IzZO6LO6sXOqTj1S0Q=";
   };
