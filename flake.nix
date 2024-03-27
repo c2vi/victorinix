@@ -7,10 +7,21 @@
 
  		flake-utils.url = "github:numtide/flake-utils";
   };
-  outputs = { flake-utils, nixpkgs, ... }@inputs: flake-utils.lib.eachDefaultSystem (system: let pkgs = nixpkgs.legacyPackages.${system}; in {
+  outputs = { self, flake-utils, nixpkgs, ... }@inputs: 
+  
+  ####################################
+  # outputs the same for every system
+  {
 
+  } //
+
+  ####################################
+  # system specific outpugs
+  flake-utils.lib.eachDefaultSystem (system: let pkgs = nixpkgs.legacyPackages.${system}; in {
+
+    packages.webfiles = pkgs.callPackage ./webfiles.nix {inherit inputs nixpkgs self; url = "http://c2vi.dev"; };
+    packages.webrun = pkgs.callPackage ./webrun.nix {inherit inputs nixpkgs self; url = "http://c2vi.dev"; };
       
-    #packages.default =
     devShells.default = pkgs.mkShell {
       buildInputs = with pkgs; [ libelf cargo rustc ];
     };

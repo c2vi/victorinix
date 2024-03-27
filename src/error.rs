@@ -1,3 +1,5 @@
+use std::ffi::NulError;
+
 
 pub type VicResult<T> = Result<T, VicError>;
 
@@ -27,5 +29,11 @@ impl From<libelf::Error> for VicError {
 impl From<std::io::Error> for VicError {
     fn from(value: std::io::Error) -> Self {
         return VicError { msg: format!("{}", value) };
+    }
+}
+
+impl From<NulError> for VicError {
+    fn from(value: NulError) -> Self {
+        VicError::msg(format!("NulError: {}", value))
     }
 }

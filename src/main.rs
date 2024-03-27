@@ -30,9 +30,10 @@ fn main() {
     // log a message of every level, to test loging
     test_logger();
 
-    let props = Props::from_exe_file();
+    // TODO
+    //let props = Props::from_exe_file();
 
-    println!("{:?}", props)
+    println!()
 }
 
 
