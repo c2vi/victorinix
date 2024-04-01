@@ -23,7 +23,7 @@ I don't know how exactly this is going to work, but i want an ability to write t
 ### The Victorinix Search
 The end goal is that anything you would want to do on your system, you could just search here and find it.
 
-#### Search categories
+#### Search categories (should also just be victorinix types)
 - random useful peaces of information
 - bash aliases and functions
 - quick actions
@@ -34,6 +34,13 @@ The end goal is that anything you would want to do on your system, you could jus
 - systems
     - chroot systems
     - vm systems (goal: open Victorinix gui, search for MacOS, hit enter twice, wait and you should have a fully setup MacOS VM)
+        - a way to search all packages available on macos including mac-ports, homebrew, app-store, nixpkgs, ...
+- all the victorinix types
+- build-info
+    - interesting things you discover when building and packaging software
+    - aka my t/build tag in obsidian
+- build-err and bug
+    - have a flag: fixed
 
 #### Search categories from external sources
 - google results
@@ -69,7 +76,7 @@ The end goal is that anything you would want to do on your system, you could jus
 - docker
 - wine apps and windows apps (for the windows versio of it)
     - altium
-    - fusion
+    - fusion (make the export dialog work)
 - ross (robotic communication)
 - multisim
 - raspi images as a vm
@@ -78,6 +85,10 @@ The end goal is that anything you would want to do on your system, you could jus
     - or a pyton nix env ... where you can also add pip and anaconda packages
 - linix distros runnin in container with windowed Xserver
 - gnome, kde, xfce that start as a windowed Xserver
+- package some cool neovim, bash, tmux, wm (cool looking rices) and other cool dotfiles repos as runnable with one command....
+    - eg: https://www.youtube.com/watch?v=VljhZ0e9zGE
+- chris-titus's windows toolbox
+- atlasOS
 
 ## package programs protably with their config
 Programs packaged as an victorinix item have options, where you can configure them. 
