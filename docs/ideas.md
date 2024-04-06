@@ -20,6 +20,8 @@ I am a keen NixOS user, but there is one thing that bothers me about it. In orde
 ### Secrets management
 I don't know how exactly this is going to work, but i want an ability to write the secrets needed for a system install also to the specified disk.
 
+Have an authetication machanism with qr codes. (like Discord)
+
 ### The Victorinix Search
 The end goal is that anything you would want to do on your system, you could just search here and find it.
 
@@ -89,6 +91,8 @@ The end goal is that anything you would want to do on your system, you could jus
     - eg: https://www.youtube.com/watch?v=VljhZ0e9zGE
 - chris-titus's windows toolbox
 - atlasOS
+- a quick run openvpn, wireguard, ....
+- nix-ls and run-appimage (a way to run normal linux binaries)
 
 ## package programs protably with their config
 Programs packaged as an victorinix item have options, where you can configure them. 
@@ -179,6 +183,26 @@ Instances are mostly isolated. But some communication or shared resources are ne
 
 ## env
 A set of parameters, that describe your current system. eg: `env.os = "linux"`. Items can then require certain parameters of a system, eg programs that only run on windows require env.os to be "windows".
+
+For a "system" we need to differentiate between usespace, kernel stuff and maybe boot stuff..... NixOS imo has a problem there, because it has userspace + kernelspace + bootstuff and seperates out hardware stuff (which does not work properly all the time)
+One of the Biggest problems: change of interface names. (in my rpi python script wlp2s0 was hardcoded).
+
+So when you ran a env-scan on my main, you should get, that it has a wifi card named wlp2s0, through which can connect to a network with ssid pw, which is made by the phone system. I want to be able to take this, and tell  qemu to emulate a wifi card, where i can then make an ssh connection over to the phone system also running as a vm.
+
+There are some env props or config props can be changed at runtime. (eg pluging a usb drive into a system)
+
+## There are different types of systems
+- user-space system
+    - basically a docker container
+    - defined by env (docker cmdline, what network interfaces, port forwards, ...) and root fs and entrypoint
+- kernel system
+    - kernel, initrd and kernel args
+- bios system or bootloader system??
+    - series of bytes (usially a drive), where the first 512 bytes are read and executed, which shall load the rest of the system in a bios manner
+    - need to check, how this works with windows (the chainloading)
+- efi system
+    - an efi exe and a drive
+    - efi exe needs to laod rest of the system in an efi way
 
 ## transformations
 If you want to run an item, that requires `env.os = "windows"`, but your current system is linux. A transformation describes ways to get from `env.os = windows` to `env.os = "linux"`. One way for that would be to start a vm (which would be done by a different item, that optionally requires `env.linux.kvm = true`), another to use wine.
