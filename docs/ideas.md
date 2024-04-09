@@ -93,6 +93,18 @@ The end goal is that anything you would want to do on your system, you could jus
 - atlasOS
 - a quick run openvpn, wireguard, ....
 - nix-ls and run-appimage (a way to run normal linux binaries)
+- binfmt_misc registrations (with qemu but also winvm and macos vms)
+- reverse wifi acces point
+    - image on raspberry
+
+## The reverse wifi acces point problem
+You should be able to: `vic flash reverse-wifi-acces-point -s wifi-ssid=my-wifi,wifi-psk=supersecret /dev/mmcblk0`, stick the sdcard into a pi and it works.
+
+Therefore you need the name and mac-addr for the ethernet card from env.hw.nic.0.hwaddr. But you can't have that without running vic-env dump on the target pi.
+
+So either you flash something, which boots, runns vic-env fully from ram, finished the build and then reflashesa. (This is a pfusch)
+
+It'd be better to inject this value at rumtime, which is actually similar to how secrets should work.
 
 ## package programs protably with their config
 Programs packaged as an victorinix item have options, where you can configure them. 
