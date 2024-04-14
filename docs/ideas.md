@@ -92,10 +92,20 @@ The end goal is that anything you would want to do on your system, you could jus
 - chris-titus's windows toolbox
 - atlasOS
 - a quick run openvpn, wireguard, ....
-- nix-ls and run-appimage (a way to run normal linux binaries)
+- nix-ld and run-appimage (a way to run normal linux binaries)
 - binfmt_misc registrations (with qemu but also winvm and macos vms)
 - reverse wifi acces point
     - image on raspberry
+- xserver
+    - run as a window of another x-server
+    - run and render directly to gpu device
+    - run and render as a framebuffer in a file
+    - run as a http server, that views the contents
+    - run as a vnc server
+    - run on another tty
+- alpine build image
+    - runs an alpine image, where you can instantly start building an alpine package (and aports checked out)
+    - maybe other distros
 
 ## The reverse wifi acces point problem
 You should be able to: `vic flash reverse-wifi-acces-point -s wifi-ssid=my-wifi,wifi-psk=supersecret /dev/mmcblk0`, stick the sdcard into a pi and it works.
@@ -105,6 +115,9 @@ Therefore you need the name and mac-addr for the ethernet card from env.hw.nic.0
 So either you flash something, which boots, runns vic-env fully from ram, finished the build and then reflashesa. (This is a pfusch)
 
 It'd be better to inject this value at rumtime, which is actually similar to how secrets should work.
+
+## The service dependencie problem
+A windows exe requires a winvm to be running, a incus vm requires a incus daemon running. Nix does not really have a way to configure such things.
 
 ## package programs protably with their config
 Programs packaged as an victorinix item have options, where you can configure them. 
