@@ -3,7 +3,12 @@
 , url
 , nixpkgs
 , self
+, system
+, c2vi-config
 , ... }:
+let
+  pkgsStatic = (import nixpkgs { inherit system; overlayfs = [ c2vi-config.overlays.static ]; }).pkgsStatic;
+in
 
 stdenv.mkDerivation rec {
   name = "victorinix-webfiles";
@@ -112,6 +117,12 @@ stdenv.mkDerivation rec {
     cp ${victorinix-s} $out/s
     cp ${victorinix-l}/bin/victorinix $out/l
     cp ${victorinix-la}/bin/victorinix $out/la
+
+    mkdir -p $out/tars
+    mkdir -p ./nix-store
+    ${pkgs.nix}/bin/nix copy ${pkgs.nix} --store ./nix-store
+    ${pkgs.nix}/bin/nix copy ${pkgsStatic.proot} --store ./nix-store
+    ${pkgs.gnutar}/bin/tar -C ./nix-store -czf $out/tars/x86_64-linux.tar.gz .
   '';
 
 	nativeBuildInputs = [
