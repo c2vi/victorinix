@@ -18,10 +18,12 @@
 
   ####################################
   # system specific outpugs
-  flake-utils.lib.eachDefaultSystem (system: let pkgs = nixpkgs.legacyPackages.${system}; in {
+  flake-utils.lib.eachDefaultSystem (system: let pkgs = nixpkgs.legacyPackages.${system}; in rec {
 
     packages.webfiles = pkgs.callPackage ./webfiles.nix {inherit inputs nixpkgs self c2vi-config; url = "http://c2vi.dev"; };
-    packages.webrun = pkgs.callPackage ./webrun.nix {inherit inputs nixpkgs self; url = "http://c2vi.dev"; };
+    packages.webrun = pkgs.writeShellScriptBin "vic-webrun" ''
+      ${pkgs.darkhttpd}/bin/darkhttpd ${packages.webfiles} --log ./victorinix-access.log $@
+    '';
       
     devShells.default = pkgs.mkShell {
       buildInputs = with pkgs; [ libelf cargo rustc ];

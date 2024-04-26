@@ -7,12 +7,9 @@
 , c2vi-config
 , ... }:
 let
-  pkgsStatic = (import nixpkgs { inherit system; overlayfs = [ c2vi-config.overlays.static ]; }).pkgsStatic;
-in
+  pkgsStatic = (import nixpkgs { inherit system; overlays = [ c2vi-config.overlays.static ]; }).pkgsStatic;
 
-stdenv.mkDerivation rec {
-  name = "victorinix-webfiles";
-  dontUnpack = true;
+  closure-x86_64-linux = pkgs.buildPackages.closureInfo { rootPaths = [ pkgsStatic.proot ]; };
 
   #victorinix-l = let pkgs = nixpkgs.legacyPackages.x86_64-linux; in pkgs.rustPlatform.buildRustPackage rec {
   victorinix-l = let pkgs = nixpkgs.legacyPackages.x86_64-linux.pkgsStatic; in pkgs.rustPlatform.buildRustPackage rec {
@@ -112,18 +109,27 @@ stdenv.mkDerivation rec {
     '';
   };
 
-  buildPhase = ''
+in
+
+stdenv.mkDerivation rec {
+  name = "victorinix-webfiles";
+  dontUnpack = true;
+
+
+  buildCommand = ''
     mkdir -p $out
     cp ${victorinix-s} $out/s
     cp ${victorinix-l}/bin/victorinix $out/l
     cp ${victorinix-la}/bin/victorinix $out/la
 
     mkdir -p $out/tars
-    mkdir -p ./nix-store
-    ${pkgs.nix}/bin/nix copy ${pkgs.nix} --store ./nix-store
-    ${pkgs.nix}/bin/nix copy ${pkgsStatic.proot} --store ./nix-store
-    ${pkgs.gnutar}/bin/tar -C ./nix-store -czf $out/tars/x86_64-linux.tar.gz .
+    
+    # make tars
+    tar -c -f $out/tars/x86_64-linux.tar.gz -C / --files-from ${closure-x86_64-linux}/store-paths
+
   '';
+
+    #${pkgs.gnutar}/bin/tar -C ./nix-store -czf $out/tars/x86_64-linux.tar.gz .
 
 	nativeBuildInputs = [
 	];
