@@ -47,9 +47,9 @@ let
 
       ##########################
       # check for needed things
+      if [ -f "/dev/null" ]; then echo "/dev/null exists"; else echo /dev/null does not exist; exit 1; fi
       if command -v uname >/dev/null; then echo uname found; else echo uname not found; exit 1; fi
       if command -v chmod >/dev/null; then echo chmod found; else echo chmod not found; exit 1; fi
-
 
       ##########################
       # determine right executable
@@ -57,50 +57,56 @@ let
       kernel=$(uname -s)
       exepath=""
       if [[ "$arch" == "x86_64" ]] && [[ "$kernel" == "Linux" ]]; then
-          exepath="l"
+          exepath="l/vic"
       elif [[ "$arch" == "aarch64" ]] && [[ "$kernel" == "Linux" ]]; then
-          exepath="la"
+          exepath="la/vic"
       else
-        echo system (kernel: $kernel, arch: $arch) not supported
+        echo "system (kernel: $kernel, arch: $arch) not supported"
         exit 1
       fi
 
 
       ##########################
       # get executable
+      echo downloading victorinix binary at ${url}/$exepath
       function download_with_python(){
         python=$1
         $python -c '
-          import requests
-          r = requests.get(${url}, allow_redirects=True)
-          f = open("./vic", "wb")
-          f.write(r.content)
-          f.close()
-        '
+
+      # i hate you python with your indents!!!
+      from urllib.request import urlopen
+      import sys
+
+      with urlopen("${url}" + "/" + sys.argv[1]) as response:
+        body = response.read()
+
+      f = open("./vic", "wb")
+      f.write(body)
+      f.close()
+        ' $exepath
       }
       if command -v wget >/dev/null; then
         wget ${url}/$exepath
-      else echo wget not found, trying curl
-      fi
 
-      if command -v curl >/dev/null; then
+      elif command -v curl >/dev/null; then
+        echo wget not found, trying curl
         curl ${url}/$exepath -o ./vic
-      else echo curl not found, trying python
-      fi
 
-      if command -v pyton >/dev/null; then
+      elif command -v python >/dev/null; then
+        echo wget, curl not found, trying python
         download_with_python python
-      else echo curl not found, trying python
-      fi
 
-      if command -v python2 >/dev/null; then
-        download_with_python python2
-      else echo curl not found, trying python
-      fi
-
-      if command -v pyton3 >/dev/null; then
+      elif command -v python3 >/dev/null; then
+        echo wget, curl, python not found, trying python3
         download_with_python python3
-      else echo curl not found, trying python
+
+      elif command -v pyton2 >/dev/null; then
+        echo wget, curl, python, python3 not found, trying python2
+        download_with_python python2
+
+      else
+        echo "wget, curl, python, python2, python3 not found ... out of ways to download the victorinix binary at ${url}$exepath"
+        exit 1
       fi
 
       ##########################
@@ -118,9 +124,11 @@ stdenv.mkDerivation rec {
 
   buildCommand = ''
     mkdir -p $out
+    mkdir -p $out/l
+    mkdir -p $out/la
     cp ${victorinix-s} $out/s
-    cp ${victorinix-l}/bin/victorinix $out/l
-    cp ${victorinix-la}/bin/victorinix $out/la
+    cp ${victorinix-l}/bin/victorinix $out/l/vic
+    cp ${victorinix-la}/bin/victorinix $out/la/vic
 
     mkdir -p $out/tars
     
