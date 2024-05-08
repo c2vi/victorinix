@@ -12,9 +12,9 @@ let
   closure-x86_64-linux = pkgs.buildPackages.closureInfo { rootPaths = [ pkgsStatic.proot ]; };
 
   #victorinix-l = let pkgs = nixpkgs.legacyPackages.x86_64-linux; in pkgs.rustPlatform.buildRustPackage rec {
-  victorinix-l = let pkgs = nixpkgs.legacyPackages.x86_64-linux.pkgsStatic; in pkgs.rustPlatform.buildRustPackage rec {
+  victorinix-l = let l-pkgs = if pkgs.system == "x86_64-linux" then nixpkgs.legacyPackages.x86_64-linux.pkgsStatic else pkgs.pkgsCross.x86_64-linux.pkgsStatic; in l-pkgs.rustPlatform.buildRustPackage rec {
     name = "victorinix-l";
-    buildInputs = with pkgs; [ libelf ];
+    buildInputs = with l-pkgs; [ libelf ];
     #RUSTFLAGS = "-C target-feature=+crt-static";
     src = self;
     #cargoSha256 = "sha256-T9Zb8wtL4cJi23u5IXxJ2qb44IzZO6LO6sXOqTj1S0Q=";
@@ -22,14 +22,13 @@ let
   };
 
   #victorinix-la = let pkgs = nixpkgs.legacyPackages.aarch64-linux; in pkgs.rustPlatform.buildRustPackage rec {
-  victorinix-la = let pkgs = nixpkgs.legacyPackages.x86_64-linux.pkgsCross.aarch64-multiplatform.pkgsStatic; in pkgs.rustPlatform.buildRustPackage rec {
+  victorinix-la = let la-pkgs = if pkgs.system == "aarch64-linux" then pkgs.pkgsStatic else pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic; in la-pkgs.rustPlatform.buildRustPackage rec {
     name = "victorinix-la";
-    buildInputs = with pkgs; [ libelf ];
+    buildInputs = with la-pkgs; [ libelf ];
     #RUSTFLAGS = "-C target-feature=+crt-static";
     src = self;
     cargoSha256 = "sha256-T9Zb8wtL4cJi23u5IXxJ2qb44IzZO6LO6sXOqTj1S0Q=";
   };
-
 
   victorinix-s = pkgs.writeTextFile {
     name = "victorinix-s";
