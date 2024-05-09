@@ -22,7 +22,7 @@
 
     packages.webfiles = pkgs.callPackage ./webfiles.nix {inherit inputs nixpkgs self c2vi-config; url = "http://c2vi.dev"; };
     packages.webrun = pkgs.writeShellScriptBin "vic-webrun" ''
-      ${pkgs.darkhttpd}/bin/darkhttpd ${packages.webfiles} --log ./victorinix-access.log $@
+      ${pkgs.darkhttpd}/bin/darkhttpd ${packages.webfiles} --log ./victorinix-access.log --index vic $@
     '';
       
     devShells.default = pkgs.mkShell {
