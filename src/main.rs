@@ -16,6 +16,17 @@ use crate::elf_props::Props;
 
 mod elf_props;
 mod error;
+mod utils;
+
+mod commands {
+    pub mod info;
+    pub mod stat;
+    pub mod run;
+    pub mod build;
+    pub mod list;
+    pub mod gui;
+    pub mod env;
+}
 
 static APPNAME: &str = "vic";
 static DEFAULT_LOG_LEVEL: LevelFilter = LevelFilter::Warn;
@@ -28,12 +39,23 @@ fn main() {
     init_logger(&cli_matches);
 
     // log a message of every level, to test loging
-    test_logger();
+    // test_logger();
 
     // TODO
     //let props = Props::from_exe_file();
 
-    println!()
+    // match the subcommands
+    match cli_matches.subcommand() {
+        Some(("info", sub_matches)) => commands::info::main(&sub_matches),
+        Some(("stat", sub_matches)) => commands::stat::main(&sub_matches),
+        Some(("run", sub_matches)) => commands::run::main(&sub_matches),
+        Some(("build", sub_matches)) => commands::build::main(&sub_matches),
+        Some(("list", sub_matches)) => commands::list::main(&sub_matches),
+        Some(("gui", sub_matches)) => commands::gui::main(&sub_matches),
+        Some(("env", sub_matches)) => commands::env::main(&sub_matches),
+        None => println!("Hi, this is victorinix (also known as victor or vic). \nrun 'vic help' for a list of subcommands."),
+        Some((unknown_subcommand, _)) => println!("The subcommand {} is not known to victorinix", unknown_subcommand),
+    }
 }
 
 
@@ -244,15 +266,22 @@ fn cli_matches() -> clap::ArgMatches {
             .action(ArgAction::SetTrue)
             .help("set the log-level to OFF")
         )
-        .arg(Arg::new("config-file")
-            .long("config-file")
-            .short('f')
-            .help("The file to use")
+        .subcommand(Command::new("info")
         )
-        .arg(Arg::new("disk")
-            .long("disk")
-            .short('d')
-            .help("The file to write to. DANGEROUS!!!!")
+        .subcommand(Command::new("stat")
+        )
+        .subcommand(Command::new("run")
+            .arg(Arg::new("runnable")
+                .help("The item to be run")
+            )
+        )
+        .subcommand(Command::new("build")
+        )
+        .subcommand(Command::new("list")
+        )
+        .subcommand(Command::new("gui")
+        )
+        .subcommand(Command::new("env")
         )
         ;
 
