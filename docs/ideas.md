@@ -66,10 +66,20 @@ The end goal is that anything you would want to do on your system, you could jus
     - doanload Victorinix binary
     - open gui
     - search os of choice
+    - change some options eg user, password, ip-addr, ssh-key, ...
     - hit install and select drive to install onto
     - wait
     - done
     - if it's the running disk, this will make some space at the end of the disk (or somewhere else on it), install a tiny linux distro onto it, copy the selected config to it and tell the firmware to boot that partition, this distro will copy itself completely to ram on boot and then install the selected config onto the drive.
+- options for building webfiles
+    - one option
+    - so that i can download c2vi.dev/ml (ml for my-linux)
+    - eg to include certain items as an overlay....
+- make a thing, to quickly build a env to crosscompile a kernel module for a lineageos kernel
+    - compiling this: https://github.com/oandrew/ipod-gadget
+    - for the kernel: https://github.com/LineageOS/android_kernel_samsung_exynos9810
+- cloud-init: https://github.com/canonical/cloud-init/blob/main/doc/examples/cloud-config.txt
+- https://github.com/nix-community/dream2nix
 
 
 # Programs to package portably
@@ -87,8 +97,10 @@ The end goal is that anything you would want to do on your system, you could jus
     - or a pyton nix env ... where you can also add pip and anaconda packages
 - linix distros runnin in container with windowed Xserver
 - gnome, kde, xfce that start as a windowed Xserver
-- package some cool neovim, bash, tmux, wm (cool looking rices) and other cool dotfiles repos as runnable with one command....
-    - eg: https://www.youtube.com/watch?v=VljhZ0e9zGE
+- package programms with their config bundeled in
+    - includes shell completions
+    - package some cool neovim, bash, tmux, wm (cool looking rices) and other cool dotfiles repos as runnable with one command....
+        - eg: https://www.youtube.com/watch?v=VljhZ0e9zGE
 - chris-titus's windows toolbox
 - atlasOS
 - a quick run openvpn, wireguard, ....
@@ -106,6 +118,18 @@ The end goal is that anything you would want to do on your system, you could jus
 - alpine build image
     - runs an alpine image, where you can instantly start building an alpine package (and aports checked out)
     - maybe other distros
+- a thing to try out:
+    - if you enter robotnix debugEnterEnv with nix installed on debian, you can't run vim, file, ... anymore
+    - even running a vim, that is linked with things from the nix store does not work
+    ```
+./seb/file/bin/file: /usr/lib/libc.so.6: version `GLIBC_2.38' not found (required by ./seb/file/bin/file)
+./seb/file/bin/file: /usr/lib/libc.so.6: version `GLIBC_2.34' not found (required by ./seb/file/bin/file)
+./seb/file/bin/file: /usr/lib/libc.so.6: version `GLIBC_2.38' not found (required by /nix/store/4if234lnkhfkindsr9m62s4b4lh3iynf-file-5.45/lib/libmagic.so.1)
+    ```
+    - building a pkgsStatic.vim works
+    - i also want `vic build vim; ./vim` to work in that case
+- have a /a as an output, which is an apk, that can be installed onto android, basically a termux with vic installed
+- run a nixos chroot, that mounts the /nix/store
 
 ## The reverse wifi acces point problem
 You should be able to: `vic flash reverse-wifi-acces-point -s wifi-ssid=my-wifi,wifi-psk=supersecret /dev/mmcblk0`, stick the sdcard into a pi and it works.
@@ -155,11 +179,12 @@ With such a mount namespcae hack also a one-command home-manager env should be a
 - vic stat
     - show gotten items, their closure size, what would be freed by `vic nix store gc`
     - size of app-data folders
-- vic list app-data
-    - list app-data folders
-- vic list installed
-- vic list registrations
-- vic list daemons
+- vic list (short: ls)
+    - by default lists all  things in sections
+    - vic list data
+    - vic list built
+    - vic list registrations (short: reg)
+    - vic list running
 - vic gui
     - should run the gui
 - shortcuts with only few letters!!!!
@@ -249,4 +274,17 @@ Program files, ....
 ## app-data
 Things that are created, while running an item and associated with this instance. Like minecraft Worlds, or if you instantiate a windows vm, all the things you install into that, are part of app-data.
 
+
+# nix projects to keep in mind, while building this
+- https://github.com/serokell/deploy-rs
+- https://github.com/nix-community/disko
+- https://github.com/nix-community/awesome-nix
+- https://github.com/NixOS/nixos-hardware
+- https://github.com/paisano-nix/core
+- https://github.com/divnix/hive
+- https://github.com/chenxiaolong/aosproot
+- https://github.com/divnix
+- https://github.com/antifob/incus-windows
+- https://github.com/thiagokokada/nix-alien
+- https://www.youtube.com/watch?v=4VhJSxMKIqM
 
