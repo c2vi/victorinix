@@ -80,6 +80,12 @@ The end goal is that anything you would want to do on your system, you could jus
     - for the kernel: https://github.com/LineageOS/android_kernel_samsung_exynos9810
 - cloud-init: https://github.com/canonical/cloud-init/blob/main/doc/examples/cloud-config.txt
 - https://github.com/nix-community/dream2nix
+- https://github.com/DeterminateSystems/nix-installer
+- instruction items, for less techy people
+    - eg instructions to flash vic based lineageos (generated from lineage docs of course)
+    - a adb based script (with instruction item), that generates robotnix config from a running android phone + ectract app data and secrets the vic way
+- app-data items: we as vic define program x stores its command history at this path..... and you see appdata items for victor items and can decide which to delete (eg delete caches), they have types like cache, history, user_data,...
+- vic run http - runs darkhttp and serves pwd, have a index html that allows uploads + scriptable dir listings
 
 
 # Programs to package portably
