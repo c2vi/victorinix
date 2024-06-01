@@ -60,7 +60,7 @@ impl Props {
         let result = unsafe {
             get_props_c(
                 CString::new(exe.to_str()
-                    .ok_or(VicError::msg("PathBuf of this exe can't be converted into a str"))?)?
+                    .ok_or(VicError::new().msg("PathBuf of this exe can't be converted into a str"))?)?
                     .as_ptr()
             )
         };

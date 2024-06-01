@@ -17,6 +17,7 @@ use crate::elf_props::Props;
 mod elf_props;
 mod error;
 mod utils;
+mod victor;
 
 mod commands {
     pub mod info;
@@ -31,7 +32,6 @@ mod commands {
 static APPNAME: &str = "vic";
 static DEFAULT_LOG_LEVEL: LevelFilter = LevelFilter::Warn;
 
-
 fn main() {
 
     let cli_matches = cli_matches();
@@ -45,7 +45,7 @@ fn main() {
     //let props = Props::from_exe_file();
 
     // match the subcommands
-    match cli_matches.subcommand() {
+    let result = match cli_matches.subcommand() {
         Some(("info", sub_matches)) => commands::info::main(&sub_matches),
         Some(("stat", sub_matches)) => commands::stat::main(&sub_matches),
         Some(("run", sub_matches)) => commands::run::main(&sub_matches),
@@ -53,8 +53,12 @@ fn main() {
         Some(("list", sub_matches)) => commands::list::main(&sub_matches),
         Some(("gui", sub_matches)) => commands::gui::main(&sub_matches),
         Some(("env", sub_matches)) => commands::env::main(&sub_matches),
-        None => println!("Hi, this is victorinix (also known as victor or vic). \nrun 'vic help' for a list of subcommands."),
-        Some((unknown_subcommand, _)) => println!("The subcommand {} is not known to victorinix", unknown_subcommand),
+        None => { println!("Hi, this is victorinix (also known as victor or vic). \nrun 'vic help' for a list of subcommands."); Ok(())},
+        Some((unknown_subcommand, _)) => { println!("The subcommand {} is not known to victorinix", unknown_subcommand); Ok(()) },
+    };
+
+    if let Err(vic_err) = result {
+        vic_err.log();
     }
 }
 

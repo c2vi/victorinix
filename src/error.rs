@@ -1,39 +1,112 @@
 use std::ffi::NulError;
-
+use std::fmt::Display;
+use log::{error, info};
+use colored::Colorize;
 
 pub type VicResult<T> = Result<T, VicError>;
 
+#[macro_export]
+macro_rules! vic_err {
+    ($($arg:tt)*) => { VicError::new().msg(format!( $($arg)*)) };
+}
+
 #[derive(Debug)]
 pub struct VicError {
-    pub msg: String,
+    pub msg: Vec<String>,
+    pub code_location: Option<VicCodeLocation>,
 } 
 
+pub trait IntoVicResult<T, S> {
+    fn vic_result(self) -> VicResult<T>;
+    fn vic_result_msg(self, msg: S) -> VicResult<T> where S: std::fmt::Display ;
+}
+
+#[derive(Debug, Clone)]
+pub struct VicCodeLocation {
+    file: String,
+    line: u32,
+    column: u32,
+}
+
 impl VicError {
-    pub fn msg<T: Into<String>>(msg: T) -> VicError {
-        VicError { msg: msg.into() }
+    #[track_caller]
+    pub fn new() -> VicError {
+        let caller_location = std::panic::Location::caller();
+        let mut err = VicError { msg: Vec::new(), code_location: None };
+        err.location(caller_location.into())
+    }
+    fn location(mut self, location: VicCodeLocation) -> VicError {
+        self.code_location = Some(location);
+        self
+    }
+    pub fn msg<T: Into<String>>(mut self, msg: T) -> VicError {
+        self.msg.push(msg.into());
+        self
+    }
+    pub fn log(self) -> VicError {
+        error!("VicError envountered!");
+        if let Some(ref location) = self.code_location {
+            error!("[ {} ] {}", "LOCATION".yellow(), location);
+        };
+        for msg in &self.msg {
+            error!("[ {} ] {}", "MSG".yellow(), msg);
+        }
+        self
     }
 }
 
-impl From<libelf::Error> for VicError {
-    fn from(value: libelf::Error) -> Self {
-        let string = format!("{}", value);
-        return VicError { msg: string };
+////////////////// trait implementations
 
-        //let c_buf: *const c_char = unsafe { libelf::raw::elf_errmsg(5) };
-        //let c_str: &CStr = unsafe { CStr::from_ptr(c_buf) };
-        //let str_slice: &str = c_str.to_str().unwrap();
-        //println!("ERROR: {}", str_slice);
+impl<T: Display> From<T> for VicError {
+    #[track_caller]
+    fn from(value: T) -> Self {
+        let caller_location = std::panic::Location::caller();
+        VicError::new()
+            .msg(format!("From {}: {}", std::any::type_name_of_val(&value), value))
+            .location(caller_location.into())
     }
 }
 
-impl From<std::io::Error> for VicError {
-    fn from(value: std::io::Error) -> Self {
-        return VicError { msg: format!("{}", value) };
+impl<T, E, S> IntoVicResult<T, S> for Result<T, E> where E: std::fmt::Display + std::fmt::Debug {
+    #[track_caller]
+    fn vic_result(self) -> VicResult<T> {
+        let caller_location = std::panic::Location::caller();
+
+        match self {
+            Ok(val) => VicResult::Ok(val),
+            Err(err) => VicResult::Err(VicError::new()
+                .msg(format!("From {}: {}", std::any::type_name_of_val(&err), err))
+                .msg(format!("LONG msg: {:?}", err))
+                .location(caller_location.into())),
+        }
+    }
+    #[track_caller]
+    fn vic_result_msg(self, msg: S) -> VicResult<T> where S: std::fmt::Display {
+        let caller_location = std::panic::Location::caller();
+        match self {
+            Ok(val) => VicResult::Ok(val),
+            Err(err) => VicResult::Err(VicError::new()
+                .msg(format!("{}", msg))
+                .msg(format!("From {}: {}", std::any::type_name_of_val(&err), err))
+                .msg(format!("LONG msg: {:?}", err))
+                .location(caller_location.into())),
+        }
     }
 }
 
-impl From<NulError> for VicError {
-    fn from(value: NulError) -> Self {
-        VicError::msg(format!("NulError: {}", value))
+impl Display for VicCodeLocation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "file: {} line: {} column: {}", self.file, self.line, self.column)
     }
 }
+
+impl From<&std::panic::Location <'_>> for VicCodeLocation {
+    fn from(panic_location: &std::panic::Location) -> VicCodeLocation {
+        let file = panic_location.file().to_string();
+        let line = panic_location.line();
+        let column = panic_location.column();
+        VicCodeLocation {file, line, column}
+    }
+}
+
+

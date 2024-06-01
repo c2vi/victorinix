@@ -5,30 +5,18 @@
 , self
 , system
 , c2vi-config
+, vicConfig
+, getTarballClosure
+, getVicorinix
 , ... }:
 let
-  pkgsStatic = (import nixpkgs { inherit system; overlays = [ c2vi-config.overlays.static ]; }).pkgsStatic;
+  closure-x86_64-linux = getTarballClosure pkgs "x86_64-linux";
 
-  closure-x86_64-linux = pkgs.buildPackages.closureInfo { rootPaths = [ pkgsStatic.proot ]; };
+  closure-aarch64-linux = getTarballClosure pkgs "aarch64-linux";
 
   #victorinix-l = let pkgs = nixpkgs.legacyPackages.x86_64-linux; in pkgs.rustPlatform.buildRustPackage rec {
-  victorinix-l = let l-pkgs = if pkgs.system == "x86_64-linux" then nixpkgs.legacyPackages.x86_64-linux.pkgsStatic else pkgs.pkgsCross.x86_64-linux.pkgsStatic; in l-pkgs.rustPlatform.buildRustPackage rec {
-    name = "victorinix-l";
-    buildInputs = with l-pkgs; [ libelf ];
-    #RUSTFLAGS = "-C target-feature=+crt-static";
-    src = self;
-    #cargoSha256 = "sha256-T9Zb8wtL4cJi23u5IXxJ2qb44IzZO6LO6sXOqTj1S0Q=";
-    cargoSha256 = "sha256-TaQWt3sh/TrWmNdvEGH0mIoQp0kOO2TUlVRfyoMDWZI=";
-  };
-
-  #victorinix-la = let pkgs = nixpkgs.legacyPackages.aarch64-linux; in pkgs.rustPlatform.buildRustPackage rec {
-  victorinix-la = let la-pkgs = if pkgs.system == "aarch64-linux" then pkgs.pkgsStatic else pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic; in la-pkgs.rustPlatform.buildRustPackage rec {
-    name = "victorinix-la";
-    buildInputs = with la-pkgs; [ libelf ];
-    #RUSTFLAGS = "-C target-feature=+crt-static";
-    src = self;
-    cargoSha256 = "sha256-T9Zb8wtL4cJi23u5IXxJ2qb44IzZO6LO6sXOqTj1S0Q=";
-  };
+  victorinix-l = getVicorinix pkgs "x86_64-linux" "l" "sha256-0kAb+sieN+Ipnr8E3CS3oy+9+4qvUQU3rXrhpJyGTIM=";
+  victorinix-la = getVicorinix pkgs "aarch64-multiplatform" "la" "sha256-eB/+tcI5+pWSMq2fIKI3qPcuRKOg0r1C3/wm999G8CE=";
 
   victorinix-s = pkgs.writeTextFile {
     name = "victorinix-s";
@@ -46,7 +34,7 @@ let
 
       ##########################
       # check for needed things
-      if [ -f "/dev/null" ]; then echo "/dev/null exists"; else echo /dev/null does not exist; exit 1; fi
+      if [ -c "/dev/null" ]; then echo "/dev/null exists"; else echo /dev/null does not exist; exit 1; fi
       if command -v uname >/dev/null; then echo uname found; else echo uname not found; exit 1; fi
       if command -v chmod >/dev/null; then echo chmod found; else echo chmod not found; exit 1; fi
 
@@ -116,12 +104,12 @@ let
 
 in
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation {
   name = "victorinix-webfiles";
   dontUnpack = true;
 
 
-  buildCommand = ''
+  buildPhase = ''
     mkdir -p $out
     mkdir -p $out/l
     mkdir -p $out/la
@@ -132,8 +120,8 @@ stdenv.mkDerivation rec {
     mkdir -p $out/tars
     
     # make tars
-    tar -c -f $out/tars/x86_64-linux.tar.gz -C / --files-from ${closure-x86_64-linux}/store-paths
-
+    tar -z -c -f $out/tars/x86_64-linux.tar.gz -C / --files-from ${closure-x86_64-linux}/store-paths --mode="a+rwx"
+    tar -z -c -f $out/tars/aarch64-linux.tar.gz -C / --files-from ${closure-aarch64-linux}/store-paths --mode="a+rwx"
   '';
 
     #${pkgs.gnutar}/bin/tar -C ./nix-store -czf $out/tars/x86_64-linux.tar.gz .
