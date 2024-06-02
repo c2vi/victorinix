@@ -44,7 +44,7 @@
 
     defaultVicConfig = {
       inherit url repoUrl;
-      vic_folder = "~/.victorinix";
+      vic_dir = "~/.victorinix";
     };
 
     getTarballClosure = pkgs: system: let

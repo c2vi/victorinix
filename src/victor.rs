@@ -46,8 +46,8 @@ impl Victor {
             self.create_folder()?;
 
             let mut url = self.config_get("url")? + "/tars/x86_64-linux.tar.gz";
-            let vic_folder = self.config_get("vic_folder")?;
-            let tmp_file_path_gz = vic_folder.clone() + "/tmp.tar.gz";
+            let vic_dir = self.config_get("vic_dir")?;
+            let tmp_file_path_gz = vic_dir.clone() + "/tmp.tar.gz";
 
             info!("fetching tarball from: {}", url);
 
@@ -61,7 +61,7 @@ impl Victor {
             let tar = GzDecoder::new(tar_gz);
             let mut archive = Archive::new(tar);
             //archive.set_mask(umask::Mode::parse("rwxrwxrwx")?.into());
-            archive.unpack(&vic_folder)?;
+            archive.unpack(&vic_dir)?;
 
             fs::remove_file(&tmp_file_path_gz)?;
 
@@ -71,8 +71,8 @@ impl Victor {
     }
 
     fn create_folder(&self) -> VicResult<()> {
-        let path = self.config_get("vic_folder")?;
-        info!("creating vic_folder at: {}", path);
+        let path = self.config_get("vic_dir")?;
+        info!("creating vic_dir at: {}", path);
         if !Path::new(&path).exists() {
             fs::create_dir(path);
         }
@@ -119,25 +119,25 @@ impl VictorConfig {
     }
 
     fn read_folder_config(&mut self) -> VicResult<()> {
-        debug!("reading config from vic_folder");
+        debug!("reading config from vic_dir");
         trace!("read folder config ... VictorConfig is now: {:?}", self.inner);
-        self.fix_vic_folder_path()?;
+        self.fix_vic_dir()?;
         Ok(())
     }
 
-    // this fn replaces a leading '~' in the vic_folder conf var with an absolute path to a users
+    // this fn replaces a leading '~' in the vic_dir conf var with an absolute path to a users
     // home dir
-    fn fix_vic_folder_path(&mut self) -> VicResult<()> {
-        let old_vic_folder = self.get(vec!["vic_folder".to_owned()])?;
+    fn fix_vic_dir(&mut self) -> VicResult<()> {
+        let old_vic_dir = self.get(vec!["vic_dir".to_owned()])?;
 
-        let first_char = old_vic_folder.chars().nth(0)
-            .ok_or(vic_err!("vic_folder config path is an empty string, should not be possible"))?;
+        let first_char = old_vic_dir.chars().nth(0)
+            .ok_or(vic_err!("vic_dir config path is an empty string, should not be possible"))?;
 
         if first_char == '~' {
-            debug!("substituting ~ with val from $HOME in vic_folder");
+            debug!("substituting ~ with val from $HOME in vic_dir");
             let home_path = std::env::var("HOME").vic_result_msg("Could not get $HOME")?;
-            let new_vic_folder = old_vic_folder.replace("~", &home_path);
-            self.set(vec!["vic_folder".to_owned()], new_vic_folder)?;
+            let new_vic_dir = old_vic_dir.replace("~", &home_path);
+            self.set(vec!["vic_dir".to_owned()], new_vic_dir)?;
         }
 
         Ok(())
@@ -157,7 +157,7 @@ impl VictorConfig {
         } else {
             return Err(vic_err!("root of json string from BUILD_CONFIG is not a map"));
         }
-        self.fix_vic_folder_path()?;
+        self.fix_vic_dir()?;
         trace!("read build config ... VictorConfig is now: {:?}", self.inner);
         Ok(())
     }
