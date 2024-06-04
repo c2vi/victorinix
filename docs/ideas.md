@@ -86,7 +86,9 @@ The end goal is that anything you would want to do on your system, you could jus
     - a adb based script (with instruction item), that generates robotnix config from a running android phone + ectract app data and secrets the vic way
 - app-data items: we as vic define program x stores its command history at this path..... and you see appdata items for victor items and can decide which to delete (eg delete caches), they have types like cache, history, user_data,...
 - vic run http - runs darkhttp and serves pwd, have a index html that allows uploads + scriptable dir listings
-
+- a way to only download what is needed for a nix build and cache that in a nix store.
+    - a way to submit that downloaded stuff to the webarchive
+    - and a way to tell nix to fetch from the webarchive if the url no longer exists
 
 # Programs to package portably
 - incus
@@ -294,4 +296,6 @@ Things that are created, while running an item and associated with this instance
 - https://github.com/antifob/incus-windows
 - https://github.com/thiagokokada/nix-alien
 - https://www.youtube.com/watch?v=4VhJSxMKIqM
+- found someone, who basically wants to do the same thing: https://discourse.nixos.org/t/nix-on-windows/1113/98
+    - https://github.com/airtonix
 
