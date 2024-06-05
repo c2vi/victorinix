@@ -139,6 +139,8 @@ The end goal is that anything you would want to do on your system, you could jus
 - have a /a as an output, which is an apk, that can be installed onto android, basically a termux with vic installed
 - run a nixos chroot, that mounts the /nix/store
 - EasyBCD
+- Stirling PDF
+- https://github.com/CorentinTh/it-tools
 
 ## The reverse wifi acces point problem
 You should be able to: `vic flash reverse-wifi-acces-point -s wifi-ssid=my-wifi,wifi-psk=supersecret /dev/mmcblk0`, stick the sdcard into a pi and it works.
