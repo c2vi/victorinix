@@ -127,6 +127,8 @@
         buildInputs = with pkgs.pkgsStatic; [ libgcc gcc ];
       };
 
+      victorinix-la = getVicorinix pkgs "aarch64-multiplatform" "la" "sha256-eB/+tcI5+pWSMq2fIKI3qPcuRKOg0r1C3/wm999G8CE=";
+
       vicPkgs = pkgs
         // (import vicPkgs { inherit pkgs; }).extra
         // (import vicPkgs { inherit pkgs; }).winePkgs
