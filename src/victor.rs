@@ -1,5 +1,7 @@
 use std::collections::HashMap;
+use std::io;
 use std::os::unix::fs::FileExt;
+use anyhow::Ok;
 use log::info;
 use serde_json::Value as JsonValue;
 use serde_json::Map as JsonMap;
@@ -11,6 +13,7 @@ use tar::Archive;
 use std::path::Path;
 use std::fs;
 use std::io::{SeekFrom, Seek};
+use std::process::Command;
 
 use crate::error::{VicResult, VicError, IntoVicResult};
 use crate::vic_err;
@@ -19,12 +22,35 @@ pub static BUILD_CONFIG: &str = include_str!(std::env!("VIC_BUILD_CONFIG"));
 
 // a struct for state
 pub struct Victor {
-    config: VictorConfig,
+    pub config: VictorConfig,
 }
 
 impl Victor {
     pub fn new() -> VicResult<Victor> {
-        Ok(Victor { config: VictorConfig::new()? })
+        let victor = Victor { config: VictorConfig::empty()? };
+
+        //victor.pre_build_config_init()?;
+
+        victor.config.read_build_config()?;
+
+        //victor.pre_folder_config_init()?;
+
+        victor.config.read_folder_config()?;
+
+        victor.post_config_init()?;
+
+        Ok(victor)
+    }
+
+    fn post_config_init(&mut self) -> VicResult<()> {
+
+        //////////// on android $HOME points to / which is not readable
+        // so set vic_dir to /sdcard/.victorinix
+        if are_we_on_android()? {
+            self.config_set("vic_dir", "/sdcard/.victorinix")?;
+        }
+
+        Ok(())
     }
 
     pub fn config_get<P: IntoVecString>(&self, path: P) -> VicResult<String> {
@@ -40,7 +66,7 @@ impl Victor {
         self.config.exists(path.to_vec_string())
     }
     
-    fn fetch_tarbal(&mut self) -> VicResult<()> {
+    fn fetch_tarball(&mut self) -> VicResult<()> {
         if !self.config_exists("internal.tarball_is_fetched") || self.config_get("internal.tarball_is_fetched")? != "true" {
             // create_folder if it doesn't already
             self.create_folder()?;
@@ -83,10 +109,17 @@ impl Victor {
 
         self.fetch_tarbal()?;
 
-        //self.fetch_vic_src()?;
+        self.fetch_vic_src()?;
 
         println!("running from vic pkgs: {}", runnable);
         println!("config: {}", BUILD_CONFIG);
+        Ok(())
+    }
+
+    pub fn fetch_vic_src(&mut self) -> VicResult<()> {
+
+
+
         Ok(())
     }
 
@@ -211,4 +244,29 @@ impl IntoVecString for &str {
 }
 
 
+fn are_we_on_android() -> VicResult<bool> {
+    // fn to check if we are on android
+
+    let check_for_getprop = Command::new("command")
+        .arg("-v").arg("getprop")
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+
+    if check_for_getprop.status().is_ok() {
+        // we could be on android, check further by getting the ro.build.version.release prop
+        let get_prop = Command::new("")
+            .arg("ro.build.version.release")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null());
+
+        if get_prop.status().is_ok() {
+            // we are on android
+            return Ok(true);
+
+        }
+    }
+
+    // no android found
+    return Ok(false);
+}
 
