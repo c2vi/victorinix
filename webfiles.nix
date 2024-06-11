@@ -25,18 +25,22 @@ let
     text = ''
       #!/bin/sh
       # This is a quick script that downloads the correct victorinix binary to ./vic
-      # Programms needed in $PATH: 
+      # Programms needed in $PATH or /bin:
       # - sh (at /bin/sh)
       # - uname
       # - chmod
       # - wget or curl or python with urllib
-      # - /dev/null
 
       ##########################
       # check for needed things
-      if [ -c "/dev/null" ]; then echo "/dev/null exists"; else echo /dev/null does not exist; exit 1; fi
-      if command -v uname >/dev/null; then echo uname found; else echo uname not found; exit 1; fi
-      if command -v chmod >/dev/null; then echo chmod found; else echo chmod not found; exit 1; fi
+
+      # add /bin to path, so that even if there is no path specified we can run if /bin/uname and /bin/chmod exist
+      PATH=$PATH:/bin
+      dev_null_replacement=$(command -v uname)
+      if [[ "@?" == "0" ]]; then echo uname found; else echo uname not found; exit 1; fi
+      dev_null_replacement=$(command -v chmod)
+      if [[ "@?" == "0" ]]; then echo chmod found; else echo chmod not found; exit 1; fi
+
 
       ##########################
       # determine right executable
@@ -72,22 +76,27 @@ let
       f.close()
         ' $exepath
       }
-      if command -v wget >/dev/null; then
+      dev_null_replacement=$(command -v wget)
+      if [[ "@?" == "0" ]]; then
         wget ${url}/$exepath
 
-      elif command -v curl >/dev/null; then
+      dev_null_replacement=$(command -v curl)
+      elif [[ "@?" == "0" ]]; then
         echo wget not found, trying curl
         curl ${url}/$exepath -o ./vic
 
-      elif command -v python >/dev/null; then
+      dev_null_replacement=$(command -v python)
+      elif [[ "@?" == "0" ]]; then
         echo wget, curl not found, trying python
         download_with_python python
 
-      elif command -v python3 >/dev/null; then
+      dev_null_replacement=$(command -v python3)
+      elif [[ "@?" == "0" ]]; then
         echo wget, curl, python not found, trying python3
         download_with_python python3
 
-      elif command -v pyton2 >/dev/null; then
+      dev_null_replacement=$(command -v python2)
+      elif [[ "@?" == "0" ]]; then
         echo wget, curl, python, python3 not found, trying python2
         download_with_python python2
 
