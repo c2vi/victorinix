@@ -129,8 +129,14 @@ stdenv.mkDerivation {
     mkdir -p $out/tars
     
     # make tars
-    tar -z -c -f $out/tars/x86_64-linux.tar.gz -C / --files-from ${closure-x86_64-linux}/store-paths --mode="a+rwx"
-    tar -z -c -f $out/tars/aarch64-linux.tar.gz -C / --files-from ${closure-aarch64-linux}/store-paths --mode="a+rwx"
+    mkdir -p nix
+    tar -z -c -f $out/tars/x86_64-linux.tar.gz -C / --files-from ${closure-x86_64-linux.info}/store-paths --mode="a+rwx"
+    cp ${closure-x86_64-linux.proot}/bin/proot nix/proot
+    tar -f $out/tars/x86_64-linux.tar.gz --append nix/proot --mode="a+rwx"
+
+    tar -z -c -f $out/tars/aarch64-linux.tar.gz -C / --files-from ${closure-aarch64-linux.info}/store-paths --mode="a+rwx"
+    cp ${closure-aarch64-linux.proot}/bin/proot nix/proot
+    tar -f $out/tars/aarch64-linux.tar.gz --append nix/proot --mode="a+rwx"
   '';
 
     #${pkgs.gnutar}/bin/tar -C ./nix-store -czf $out/tars/x86_64-linux.tar.gz .

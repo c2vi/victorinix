@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::io;
 use std::os::unix::fs::FileExt;
-use anyhow::Ok;
 use log::info;
 use serde_json::Value as JsonValue;
 use serde_json::Map as JsonMap;
@@ -13,7 +12,7 @@ use tar::Archive;
 use std::path::Path;
 use std::fs;
 use std::io::{SeekFrom, Seek};
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 use crate::error::{VicResult, VicError, IntoVicResult};
 use crate::vic_err;
@@ -27,7 +26,7 @@ pub struct Victor {
 
 impl Victor {
     pub fn new() -> VicResult<Victor> {
-        let victor = Victor { config: VictorConfig::empty()? };
+        let mut victor = Victor { config: VictorConfig::empty() };
 
         //victor.pre_build_config_init()?;
 
@@ -67,38 +66,49 @@ impl Victor {
     }
     
     fn fetch_tarball(&mut self) -> VicResult<()> {
-        if !self.config_exists("internal.tarball_is_fetched") || self.config_get("internal.tarball_is_fetched")? != "true" {
-            // create_folder if it doesn't already
-            self.create_folder()?;
+        if self.config_exists("internal.tarball_is_fetched") && self.config_get("internal.tarball_is_fetched")? == "true" {
+            // tarball is already fetched
+            return Ok(());
+        }
 
-            let mut url = self.config_get("url")? + "/tars/x86_64-linux.tar.gz";
-            let vic_dir = self.config_get("vic_dir")?;
-            let tmp_file_path_gz = vic_dir.clone() + "/tmp.tar.gz";
+        if Path::new(&self.config_get("vic_dir")?).join("nix").exists() {
+            //vic $VIC_DIR/nix exists the tarball should also be fetched
+            return Ok(());
+        }
 
-            info!("fetching tarball from: {}", url);
+        // create_folder if it doesn't already
+        self.create_folder()?;
 
-            let mut response = reqwest::blocking::get(url)?;
+        let mut url = self.config_get("url")? + "/tars/x86_64-linux.tar.gz";
+        let vic_dir = self.config_get("vic_dir")?;
+        let tmp_file_path_gz = vic_dir.clone() + "/tmp.tar.gz";
 
-            let mut tmp_file_gz = File::create(&tmp_file_path_gz)?;
+        info!("fetching tarball from: {}", url);
 
-            copy(&mut response, &mut tmp_file_gz)?;
+        let mut response = reqwest::blocking::get(url)?;
 
-            let tar_gz = File::open(&tmp_file_path_gz)?;
-            let tar = GzDecoder::new(tar_gz);
-            let mut archive = Archive::new(tar);
-            //archive.set_mask(umask::Mode::parse("rwxrwxrwx")?.into());
-            archive.unpack(&vic_dir)?;
+        let mut tmp_file_gz = File::create(&tmp_file_path_gz)?;
 
-            fs::remove_file(&tmp_file_path_gz)?;
+        copy(&mut response, &mut tmp_file_gz)?;
 
-            self.config_set("internal.tarball_is_fetched", "true");
-        };
+        let tar_gz = File::open(&tmp_file_path_gz)?;
+        let tar = GzDecoder::new(tar_gz);
+        let mut archive = Archive::new(tar);
+        //archive.set_mask(umask::Mode::parse("rwxrwxrwx")?.into());
+        archive.unpack(&vic_dir)?;
+
+        fs::remove_file(&tmp_file_path_gz)?;
+
+        self.config_set("internal.tarball_is_fetched", "true");
+
         Ok(())
     }
 
     fn create_folder(&self) -> VicResult<()> {
         let path = self.config_get("vic_dir")?;
+
         info!("creating vic_dir at: {}", path);
+
         if !Path::new(&path).exists() {
             fs::create_dir(path);
         }
@@ -107,18 +117,23 @@ impl Victor {
 
     pub fn run_from_vic_pkgs(&mut self, runnable: &str) -> VicResult<()> {
 
-        self.fetch_tarbal()?;
+        self.fetch_tarball()?;
 
-        self.fetch_vic_src()?;
+        self.nix_run()?;
 
         println!("running from vic pkgs: {}", runnable);
         println!("config: {}", BUILD_CONFIG);
         Ok(())
     }
 
-    pub fn fetch_vic_src(&mut self) -> VicResult<()> {
+    pub fn nix_run(&mut self) -> VicResult<()> {
 
+        let proot_path = self.config_get("vic_dir")?.clone() + "/nix/proot";
 
+        let mut proot = Command::new(&proot_path);
+
+        println!("proot_path: {}", proot_path);
+        proot.spawn()?;
 
         Ok(())
     }
@@ -247,17 +262,17 @@ impl IntoVecString for &str {
 fn are_we_on_android() -> VicResult<bool> {
     // fn to check if we are on android
 
-    let check_for_getprop = Command::new("command")
-        .arg("-v").arg("getprop")
-        .stdout(Stdio::null())
-        .stderr(Stdio::null());
+    let mut check_for_getprop = Command::new("command");
+    check_for_getprop.arg("-v").arg("getprop");
+    check_for_getprop.stdout(Stdio::null());
+    check_for_getprop.stderr(Stdio::null());
 
     if check_for_getprop.status().is_ok() {
         // we could be on android, check further by getting the ro.build.version.release prop
-        let get_prop = Command::new("")
-            .arg("ro.build.version.release")
-            .stdout(Stdio::null())
-            .stderr(Stdio::null());
+        let mut get_prop = Command::new("getprop");
+        get_prop.arg("ro.build.version.release");
+        get_prop.stdout(Stdio::null());
+        get_prop.stderr(Stdio::null());
 
         if get_prop.status().is_ok() {
             // we are on android

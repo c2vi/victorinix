@@ -1,6 +1,6 @@
 use std::ffi::NulError;
 use std::fmt::Display;
-use log::{error, info};
+use log::{error, info, debug};
 use colored::Colorize;
 
 pub type VicResult<T> = Result<T, VicError>;
@@ -50,6 +50,7 @@ impl VicError {
         };
         for msg in &self.msg {
             error!("[ {} ] {}", "MSG".yellow(), msg);
+            debug!("[ {} ] {:?}", "MSG".yellow(), msg);
         }
         self
     }

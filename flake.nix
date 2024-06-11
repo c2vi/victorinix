@@ -53,7 +53,10 @@
       else
         (import nixpkgs { system = pkgs.system; crossSystem = system; overlays = [ c2vi-config.overlays.static ]; })
       ;
-      in pkgs.buildPackages.closureInfo { rootPaths = [ pkgsCross.pkgsStatic.proot pkgsCross.pkgsStatic.nix ]; };
+      in {
+        info = pkgs.buildPackages.closureInfo { rootPaths = [ pkgsCross.pkgsStatic.nix ]; };
+        proot = pkgsCross.pkgsStatic.proot;
+      };
 
     # /*
     getVicorinix = pkgs: crossSystem: short: cargoSha256: let
@@ -123,6 +126,11 @@
         nativeBuildInputs = with pkgs.pkgsStatic; [ pkg-config libgcc gcc openssl libelf ];
         buildInputs = with pkgs.pkgsStatic; [ libgcc gcc ];
       };
+
+      vicPkgs = pkgs
+        // (import vicPkgs { inherit pkgs; }).extra
+        // (import vicPkgs { inherit pkgs; }).winePkgs
+        ;
 
     } // (c2vi-config.lib.flakeAddCross { inherit system; } ({ crossSystemFullString, ... }: 
     ############## cross compilable packages
