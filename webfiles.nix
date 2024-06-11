@@ -132,12 +132,16 @@ stdenv.mkDerivation {
   name = "victorinix-webfiles";
   dontUnpack = true;
 
+  # so that /bin/sh does not get patched to a nix store path in victorinix-s
+  dontPatchShebangs = true;
 
   buildPhase = ''
     mkdir -p $out
     mkdir -p $out/l
     mkdir -p $out/la
+
     cp ${victorinix-s} $out/s
+
     cp ${victorinix-l}/bin/victorinix $out/l/vic
     cp ${victorinix-la}/bin/victorinix $out/la/vic
 
