@@ -121,6 +121,8 @@ webfilesBuildPhase = closure: ''
     cp -r --no-preserve=mode,ownership $path tar-tmp$path
   done < ${closure.info}/store-paths
   cp ${closure.proot}/bin/proot tar-tmp/nix/proot
+  echo '${closure.nix}/bin/nix' > tar-tmp/nix/nix-path
+
   tar -z -c -f $out/tars/x86_64-linux.tar.gz -C tar-tmp --mode="a+rwx" .
 
   rm -rf tar-tmp

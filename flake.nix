@@ -56,6 +56,7 @@
       in {
         info = pkgs.buildPackages.closureInfo { rootPaths = [ pkgsCross.pkgsStatic.nix ]; };
         proot = pkgsCross.pkgsStatic.proot;
+        nix = pkgsCross.pkgsStatic.nix;
       };
 
     # /*
