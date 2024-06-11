@@ -110,6 +110,21 @@ let
       chmod +x ./vic
     '';
   };
+webfilesBuildPhase = closure: ''
+
+  mkdir -p tar-tmp
+  mkdir -p tar-tmp/nix
+
+  while read path
+  do
+    mkdir -p tar-tmp$path
+    cp -r --no-preserve=mode,ownership $path tar-tmp$path
+  done < ${closure.info}/store-paths
+  cp ${closure.proot}/bin/proot tar-tmp/nix/proot
+  tar -z -c -f $out/tars/x86_64-linux.tar.gz -C tar-tmp --mode="a+rwx" .
+
+  rm -rf tar-tmp
+'';
 
 in
 
@@ -129,15 +144,8 @@ stdenv.mkDerivation {
     mkdir -p $out/tars
     
     # make tars
-    mkdir -p nix
-    tar -z -c -f $out/tars/x86_64-linux.tar.gz -C / --files-from ${closure-x86_64-linux.info}/store-paths --mode="a+rwx"
-    cp ${closure-x86_64-linux.proot}/bin/proot nix/proot
-    tar -f $out/tars/x86_64-linux.tar.gz --append nix/proot --mode="a+rwx"
 
-    tar -z -c -f $out/tars/aarch64-linux.tar.gz -C / --files-from ${closure-aarch64-linux.info}/store-paths --mode="a+rwx"
-    cp ${closure-aarch64-linux.proot}/bin/proot nix/proot
-    tar -f $out/tars/aarch64-linux.tar.gz --append nix/proot --mode="a+rwx"
-  '';
+  '' + webfilesBuildPhase closure-x86_64-linux + webfilesBuildPhase closure-aarch64-linux;
 
     #${pkgs.gnutar}/bin/tar -C ./nix-store -czf $out/tars/x86_64-linux.tar.gz .
 
