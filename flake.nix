@@ -68,7 +68,7 @@
         text = builtins.toJSON defaultVicConfig;
       };
       buildInputs = with pkgsStatic; [ libelf openssl ];
-      nativeBuildInputs = with pkgsStatic; [ pkg-config ];
+      nativeBuildInputs = with pkgs; [ pkg-config ];
       src = self;
       inherit cargoSha256;
       #cargoSha256 = "sha256-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX=";
