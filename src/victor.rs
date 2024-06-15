@@ -32,21 +32,21 @@ impl Victor {
 
         victor.config.read_build_config()?;
 
-        //victor.pre_folder_config_init()?;
+        victor.pre_folder_config_init()?;
 
         victor.config.read_folder_config()?;
 
-        victor.post_config_init()?;
+        //victor.post_config_init()?;
 
         Ok(victor)
     }
 
-    fn post_config_init(&mut self) -> VicResult<()> {
+    fn pre_folder_config_init(&mut self) -> VicResult<()> {
 
         //////////// on android $HOME points to / which is not readable
         // so set vic_dir to /sdcard/.victorinix
         if are_we_on_android()? {
-            self.config_set("vic_dir", "/sdcard/.victorinix")?;
+            self.config_set("vic_dir", "/data/local/.victorinix")?;
         }
 
         Ok(())
@@ -79,7 +79,18 @@ impl Victor {
         // create_folder if it doesn't already
         self.create_folder()?;
 
-        let mut url = self.config_get("url")? + "/tars/x86_64-linux.tar.gz";
+        // determine arch
+        let mut arch_cmd = Command::new("uname");
+        arch_cmd.arg("-m");
+        let arch_output = arch_cmd.output()
+            .vic_result_msg("can't get output of 'uname -m'")?;
+        let mut arch_iter = arch_output.stdout.clone().into_iter();
+        arch_iter.next_back();
+        let arch = String::from_utf8(arch_iter.collect())
+            .vic_result_msg("not able to turn the output of 'uname -m' into a string")?;
+        debug!("found arch: '{}'", arch);
+
+        let mut url = format!("{}/tars/{}-linux.tar.gz", self.config_get("url")?, arch);
         let vic_dir = self.config_get("vic_dir")?;
         let tmp_file_path_gz = vic_dir.clone() + "/tmp.tar.gz";
 
@@ -115,25 +126,41 @@ impl Victor {
         Ok(())
     }
 
-    pub fn run_from_vic_pkgs(&mut self, runnable: &str) -> VicResult<()> {
+    pub fn run_from_vic_pkgs(&mut self, runnable: &str, sub_args: Vec<&str>) -> VicResult<()> {
+
+        debug!("running '{}' from vic pkgs", runnable);
 
         self.fetch_tarball()?;
 
-        self.nix_run()?;
+        self.nix_run(runnable, sub_args)?;
 
-        println!("running from vic pkgs: {}", runnable);
-        println!("config: {}", BUILD_CONFIG);
         Ok(())
     }
 
-    pub fn nix_run(&mut self) -> VicResult<()> {
+    pub fn nix_run(&mut self, runnable: &str, sub_args: Vec<&str>) -> VicResult<()> {
 
-        let proot_path = self.config_get("vic_dir")?.clone() + "/nix/proot";
+        let tmp_binding = self.config_get("vic_dir")?;
+        let vic_dir_path = Path::new(&tmp_binding);
+
+        let proot_path = vic_dir_path.join("nix").join("proot");
+        let nix_path = fs::read_to_string(vic_dir_path.join("nix").join("nix-path"))?;
+        let busybox_path = fs::read_to_string(vic_dir_path.join("nix").join("busybox-path"))?;
 
         let mut proot = Command::new(&proot_path);
+        proot.env_clear();
+        proot.env("PATH", format!("{}:{}", busybox_path, nix_path));
+        proot.arg("-r").arg(vic_dir_path);
+        proot.arg("-b").arg("/:/out");
+        proot.arg("-w").arg("/");
+        proot.arg(busybox_path + "/sh");
+        //proot.arg(nix_path);
+        //for sub_arg in sub_args {
+            //proot.arg(sub_arg);
+        //};
 
-        println!("proot_path: {}", proot_path);
-        proot.spawn()?;
+        let mut child_handle = proot.spawn()?;
+
+        child_handle.wait();;
 
         Ok(())
     }
@@ -262,13 +289,16 @@ impl IntoVecString for &str {
 fn are_we_on_android() -> VicResult<bool> {
     // fn to check if we are on android
 
-    let mut check_for_getprop = Command::new("command");
-    check_for_getprop.arg("-v").arg("getprop");
+    let mut check_for_getprop = Command::new("sh");
+    check_for_getprop.arg("-c").arg("command -v getprop");
     check_for_getprop.stdout(Stdio::null());
     check_for_getprop.stderr(Stdio::null());
+    let status = check_for_getprop.status();
 
-    if check_for_getprop.status().is_ok() {
+    if status.is_ok() {
+        trace!("getprop command found");
         // we could be on android, check further by getting the ro.build.version.release prop
+
         let mut get_prop = Command::new("getprop");
         get_prop.arg("ro.build.version.release");
         get_prop.stdout(Stdio::null());
@@ -276,6 +306,7 @@ fn are_we_on_android() -> VicResult<bool> {
 
         if get_prop.status().is_ok() {
             // we are on android
+            debug!("ANDROID platform found");
             return Ok(true);
 
         }

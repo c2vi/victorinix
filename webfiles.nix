@@ -37,9 +37,9 @@ let
       # add /bin to path, so that even if there is no path specified we can run if /bin/uname and /bin/chmod exist
       PATH=$PATH:/bin
       dev_null_replacement=$(command -v uname)
-      if [[ "@?" == "0" ]]; then echo uname found; else echo uname not found; exit 1; fi
+      if [[ "$?" == "0" ]]; then echo uname found; else echo uname not found; exit 1; fi
       dev_null_replacement=$(command -v chmod)
-      if [[ "@?" == "0" ]]; then echo chmod found; else echo chmod not found; exit 1; fi
+      if [[ "$?" == "0" ]]; then echo chmod found; else echo chmod not found; exit 1; fi
 
 
       ##########################
@@ -60,6 +60,7 @@ let
       ##########################
       # get executable
       echo downloading victorinix binary at ${url}/$exepath
+
       function download_with_python(){
         python=$1
         $python -c '
@@ -76,38 +77,94 @@ let
       f.close()
         ' $exepath
       }
-      dev_null_replacement=$(command -v wget)
-      if [[ "@?" == "0" ]]; then
-        wget ${url}/$exepath
 
-      dev_null_replacement=$(command -v curl)
-      elif [[ "@?" == "0" ]]; then
-        echo wget not found, trying curl
-        curl ${url}/$exepath -o ./vic
+      function try_wget(){
+        echo do we have wget??
+        dev_null_replacement=$(command -v wget)
+        found=$?
+        if [[ "$found" == "0" ]]; then
+          wget ${url}/$exepath
+        else
+          echo wget not found
+        fi
+        return $found
+      }
 
-      dev_null_replacement=$(command -v python)
-      elif [[ "@?" == "0" ]]; then
-        echo wget, curl not found, trying python
-        download_with_python python
+      function try_curl(){
+        echo do we have curl??
+        dev_null_replacement=$(command -v curl)
+        found=$?
+        if [[ "$found" == "0" ]]; then
+          curl ${url}/$exepath -o ./vic
+        else
+          echo curl not found
+        fi
+        return $found
+      }
 
-      dev_null_replacement=$(command -v python3)
-      elif [[ "@?" == "0" ]]; then
-        echo wget, curl, python not found, trying python3
-        download_with_python python3
+      function try_python(){
+        echo do we have python??
+        dev_null_replacement=$(command -v python)
+        found=$?
+        if [[ "$found" == "0" ]]; then
+          download_with_python python
+        else
+          echo python not found
+        fi
+        return $found
+      }
 
-      dev_null_replacement=$(command -v python2)
-      elif [[ "@?" == "0" ]]; then
-        echo wget, curl, python, python3 not found, trying python2
-        download_with_python python2
+      function try_python3(){
+        echo do we have python3??
+        dev_null_replacement=$(command -v python3)
+        found=$?
+        if [[ "$found" == "0" ]]; then
+          download_with_python python3
+        else
+          echo python3 not found
+        fi
+        return $found
+      }
 
-      else
-        echo "wget, curl, python, python2, python3 not found ... out of ways to download the victorinix binary at ${url}$exepath"
-        exit 1
-      fi
+      function try_python2(){
+        echo do we have python2??
+        dev_null_replacement=$(command -v python2)
+        found=$?
+        if [[ "$found" == "0" ]]; then
+          download_with_python python2
+        else
+          echo python2 not found
+        fi
+        return $found
+      }
+
+      function android_init_pre_download(){
+        cd /data/local
+      }
+
+      function are_we_on_android(){
+        dev_null_replacement=$(command -v getprop)
+        if [[ "$?" == "0" ]]; then
+          dev_null_replacement=$(getprop ro.build.version.release)
+          if [[ "$?" == "0" ]]; then
+            return 0
+          fi
+        fi
+        return 1
+      }
+
+      # pre download platform specific init
+      are_we_on_android && android_init_pre_download
+
+      # download vic
+      try_wget || try_curl || try_python || try_python3 || try_python2 || (echo ERROR: out of ways to download the victor binary; exit 1)
 
       ##########################
       # make it executable
       chmod +x ./vic
+
+      # on android spawn a new sub-process, to keep the PWD at /data/local
+      are_we_on_android && echo on ANDROID HISTORY LOST because we are in a sub-process, to keep the cd to /data/local && sh
     '';
   };
 webfilesBuildPhase = closure: ''
@@ -117,13 +174,19 @@ webfilesBuildPhase = closure: ''
 
   while read path
   do
+    echo path: $path
     mkdir -p tar-tmp$path
-    cp -r --no-preserve=mode,ownership $path tar-tmp$path
+    cp -r --no-preserve=mode,ownership $path/* tar-tmp$path
   done < ${closure.info}/store-paths
-  cp ${closure.proot}/bin/proot tar-tmp/nix/proot
-  echo '${closure.nix}/bin/nix' > tar-tmp/nix/nix-path
 
-  tar -z -c -f $out/tars/x86_64-linux.tar.gz -C tar-tmp --mode="a+rwx" .
+  cp ${closure.proot}/bin/proot tar-tmp/nix/proot
+  echo -en '${closure.nix}/bin/' > tar-tmp/nix/nix-path
+  echo -en '${closure.busybox}/bin/' > tar-tmp/nix/busybox-path
+  echo iiiiiiiiiiiiiiiii
+  ls tar-tmp/nix
+  echo iiiiiiiiiiiiiiiii
+
+  tar -z -c -f $out/tars/${closure.system}.tar.gz -C tar-tmp --mode="a+rwx" .
 
   rm -rf tar-tmp
 '';
@@ -151,7 +214,12 @@ stdenv.mkDerivation {
     
     # make tars
 
-  '' + webfilesBuildPhase closure-x86_64-linux + webfilesBuildPhase closure-aarch64-linux;
+  '' + webfilesBuildPhase closure-x86_64-linux
+     + webfilesBuildPhase closure-aarch64-linux
+     # add my temporary Website to those webfiles uder /vic (the index file in webrun), because webrun in run on c2vi.dev.
+     + ''
+      cp ${self}/my-tmp-website.html $out/index.html
+     '';
 
     #${pkgs.gnutar}/bin/tar -C ./nix-store -czf $out/tars/x86_64-linux.tar.gz .
 

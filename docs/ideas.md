@@ -141,6 +141,8 @@ The end goal is that anything you would want to do on your system, you could jus
 - EasyBCD
 - Stirling PDF
 - https://github.com/CorentinTh/it-tools
+- https://github.com/tteck/Proxmox
+- windows powertoys.takeAll()
 
 ## The reverse wifi acces point problem
 You should be able to: `vic flash reverse-wifi-acces-point -s wifi-ssid=my-wifi,wifi-psk=supersecret /dev/mmcblk0`, stick the sdcard into a pi and it works.

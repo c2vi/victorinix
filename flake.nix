@@ -45,7 +45,15 @@
     defaultVicConfig = {
       inherit url repoUrl;
       vic_dir = "~/.victorinix";
+      vicPkgs_url = "github:c2vi/victorinix#vicPkgs";
     };
+
+    filteredRustSource = builtins.filterSource (name: type: (
+      pkgs.lib.strings.hasInfix "src" name ||
+      baseNameOf name == "Cargo.toml" ||
+      baseNameOf name == "build.rs" ||
+      baseNameOf name == "Cargo.lock"
+    )) ./.;
 
     getTarballClosure = pkgs: system: let
       pkgsCross = if pkgs.system == system then
@@ -53,10 +61,12 @@
       else
         (import nixpkgs { system = pkgs.system; crossSystem = system; overlays = [ c2vi-config.overlays.static ]; })
       ;
-      in {
-        info = pkgs.buildPackages.closureInfo { rootPaths = [ pkgsCross.pkgsStatic.nix ]; };
+      in rec {
         proot = pkgsCross.pkgsStatic.proot;
         nix = pkgsCross.pkgsStatic.nix;
+        busybox = pkgsCross.pkgsStatic.busybox;
+        info = pkgs.buildPackages.closureInfo { rootPaths = [ nix busybox ]; };
+        inherit system;
       };
 
     # /*
@@ -70,7 +80,7 @@
       };
       buildInputs = with pkgsStatic; [ libelf openssl ];
       nativeBuildInputs = with pkgs; [ pkg-config ];
-      src = self;
+      src = filteredRustSource;
       inherit cargoSha256;
       #cargoSha256 = "sha256-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX=";
     };
@@ -98,15 +108,21 @@
 
     packages = rec {
 
-      proot =
+      proot-la =
         let
           pkgs = import nixpkgs { system = system; crossSystem = "aarch64-linux"; overlays = [ c2vi-config.overlays.static ]; };
         in pkgs.pkgsStatic.proot;
 
+      proot-l =
+        let
+          pkgs = import nixpkgs { system = system; crossSystem = "x86_64-linux"; overlays = [ c2vi-config.overlays.static ]; };
+        in pkgs.pkgsStatic.proot;
+      victorinix-l = getVicorinix pkgs "x86_64-linux" "l" "sha256-0kAb+sieN+Ipnr8E3CS3oy+9+4qvUQU3rXrhpJyGTIM=";
+
       webfiles = pkgs.callPackage ./webfiles.nix {inherit inputs nixpkgs self c2vi-config url getTarballClosure getVicorinix; vicConfig = defaultVicConfig; };
 
       webrun = pkgs.writeShellScriptBin "vic-webrun" ''
-        ${pkgs.darkhttpd}/bin/darkhttpd ${packages.webfiles} --log ./victorinix-access.log --index vic $@
+        ${pkgs.darkhttpd}/bin/darkhttpd ${packages.webfiles} --log ./victorinix-access.log $@
       '';
 
       npmPackage = pkgs.buildNpmPackage {
