@@ -145,14 +145,52 @@ impl Victor {
         let proot_path = vic_dir_path.join("nix").join("proot");
         let nix_path = fs::read_to_string(vic_dir_path.join("nix").join("nix-path"))?;
         let busybox_path = fs::read_to_string(vic_dir_path.join("nix").join("busybox-path"))?;
+        let cacert_path = fs::read_to_string(vic_dir_path.join("nix").join("cacert-path"))?;
+
+        println!("nix_path: {}", nix_path);
+        println!("runnable: {}", runnable);
+
+        if runnable == "default" {
+            let mut proot = Command::new(&proot_path);
+            proot.env_clear();
+            proot.env("PATH", format!("{}:{}", busybox_path, nix_path));
+            proot.env("HISTFILE", "/history");
+            proot.arg("-r").arg(vic_dir_path);
+            proot.arg("-b").arg("/:/out");
+            proot.arg("-w").arg("/");
+            proot.arg("-i").arg("0:0");
+            proot.arg(busybox_path.clone() + "/sh");
+
+            let mut child_handle = proot.spawn()?;
+
+            child_handle.wait();;
+
+            return Ok(());
+        }
 
         let mut proot = Command::new(&proot_path);
         proot.env_clear();
         proot.env("PATH", format!("{}:{}", busybox_path, nix_path));
+        proot.env("HISTFILE", "/history");
+        proot.env("TERM", "xterm-color");
+        proot.env("SSL_CERT_FILE", cacert_path);
         proot.arg("-r").arg(vic_dir_path);
         proot.arg("-b").arg("/:/out");
         proot.arg("-w").arg("/");
-        proot.arg(busybox_path + "/sh");
+        //proot.arg("-0");
+        proot.arg("-i").arg("0:0");
+
+        proot.arg(busybox_path.clone() + "/sh");
+        proot.arg("/run");
+
+        proot.env("VIC_TO_RUN", format!("nix --extra-experimental-features nix-command --extra-experimental-features flakes run nixpkgs#{}", runnable));
+
+        //proot.arg(nix_path.clone() + "nix");
+        //proot.arg("--extra-experimental-features nix-command");
+        //proot.arg("--extra-experimental-features flakes");
+        //proot.arg("run");
+        //proot.arg(format!("nixpkgs#{}", runnable));
+
         //proot.arg(nix_path);
         //for sub_arg in sub_args {
             //proot.arg(sub_arg);

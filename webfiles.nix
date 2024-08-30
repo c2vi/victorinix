@@ -182,6 +182,7 @@ webfilesBuildPhase = closure: ''
   cp ${closure.proot}/bin/proot tar-tmp/nix/proot
   echo -en '${closure.nix}/bin/' > tar-tmp/nix/nix-path
   echo -en '${closure.busybox}/bin/' > tar-tmp/nix/busybox-path
+  echo -en '${closure.cacert}/bin/' > tar-tmp/nix/cacert-path
   echo iiiiiiiiiiiiiiiii
   ls tar-tmp/nix
   echo iiiiiiiiiiiiiiiii

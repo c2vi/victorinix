@@ -89,6 +89,27 @@ The end goal is that anything you would want to do on your system, you could jus
 - a way to only download what is needed for a nix build and cache that in a nix store.
     - a way to submit that downloaded stuff to the webarchive
     - and a way to tell nix to fetch from the webarchive if the url no longer exists
+- victor spaces
+    - a place to try out building and packaging stuff
+    - you specify what you need (eg: sources, envs, ...)
+        - also define artifacts, like original samsung firmware from some web location
+    - then document steps (and other things) (with markdown)
+        - see: victor steps
+        - records bash_history, ....
+        - have a way, to add important command to a history file, with markdown docs for each one...
+        - and a way to go through your bash_history and mark certain commands as important
+    - you can then keep the data if you are stil working on it, or delete it, when the project is sone
+    - should also be usable to record steps taken to setup a rpi
+- victor steps
+    - a way to document and execute certain steps ... usually cmds
+- vic init
+    - inits example projects form all sources (rust, nix-flake-templates, npm packages, ...)
+    - has config options obviosly, where you can change the project name eg
+    - make one for my htl dipl markdown flake
+    - be able to change certain options afterwards
+        - for this an option implements imperative code, that tries to change some file in the project
+- submit victor to debian, ubuntu, arch, t2, ..... package repos
+- https://medium.com/nttlabs/container2wasm-2dd90a18cc9a
 
 # Programs to package portably
 - incus
@@ -97,6 +118,7 @@ The end goal is that anything you would want to do on your system, you could jus
 - wine apps and windows apps (for the windows versio of it)
     - altium
     - fusion (make the export dialog work)
+    - https://github.com/GloriousEggroll/wine-ge-custom
 - ross (robotic communication)
 - multisim
 - raspi images as a vm
@@ -143,6 +165,10 @@ The end goal is that anything you would want to do on your system, you could jus
 - https://github.com/CorentinTh/it-tools
 - https://github.com/tteck/Proxmox
 - windows powertoys.takeAll()
+- https://joeyh.name/code/moreutils/
+    - and have good ways to find the small tool, you need right now
+- hand tracking, Gesichtserkennung, gegenstands erkennung
+    - so that you can run that with: vic run oci-demo ... xD
 
 ## The reverse wifi acces point problem
 You should be able to: `vic flash reverse-wifi-acces-point -s wifi-ssid=my-wifi,wifi-psk=supersecret /dev/mmcblk0`, stick the sdcard into a pi and it works.

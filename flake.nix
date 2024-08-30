@@ -65,7 +65,8 @@
         proot = pkgsCross.pkgsStatic.proot;
         nix = pkgsCross.pkgsStatic.nix;
         busybox = pkgsCross.pkgsStatic.busybox;
-        info = pkgs.buildPackages.closureInfo { rootPaths = [ nix busybox ]; };
+        cacert = pkgsCross.cacert;
+        info = pkgs.buildPackages.closureInfo { rootPaths = [ nix busybox cacert ]; };
         inherit system;
       };
 

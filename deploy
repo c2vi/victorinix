@@ -1,0 +1,13 @@
+
+if [[ "$1" == "a" ]]
+then
+	path=$(nix build .#webrun -L -v --builders "$acern" --print-out-paths --max-jobs 0)
+else
+	path=$(nix build .#webrun -L -v --print-out-paths)
+fi
+
+echo path: $path
+
+scp $path/* ocih:host/webserver/webfiles
+
+
