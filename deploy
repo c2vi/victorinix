@@ -1,11 +1,12 @@
 
 if [[ "$1" == "a" ]]
 then
-	path=$(nix build .#webfiles -L -v --builders "$acern" --print-out-paths --max-jobs 0)
+	path=$(nix build .#webfiles -L -v --builders "$acern" --print-out-paths --max-jobs 0 --builders-use-substitutes )
 else
-	path=$(nix build .#webfiles -L -v --print-out-paths)
+	path=$(nix build .#webfiles -L -v --print-out-paths $@)
 fi
 
+echo doneeeeeeeeeeeeeee
 echo path: $path
 
 scp $path/* ocih:host/webserver/webfiles
