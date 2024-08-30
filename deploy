@@ -1,14 +1,23 @@
 
 if [[ "$1" == "a" ]]
 then
-	path=$(nix build .#webfiles -L -v --builders "$acern" --print-out-paths --max-jobs 0 --builders-use-substitutes )
+	ssh acern mkdir -p /tmp/victorinix
+	rsync -rv --exclude="target" ./* acern:/tmp/victorinix/
+	path=$(ssh acern nix build /tmp/victorinix#webfiles -L --print-out-paths)
+
+	echo doneeeeeeeeeeeeeee
+	echo path: $path
+
+	scp -r acern:$path/* ocih:host/webserver/webfiles
 else
 	path=$(nix build .#webfiles -L -v --print-out-paths $@)
+
+	echo doneeeeeeeeeeeeeee
+	echo path: $path
+
+	scp -r $path/* ocih:host/webserver/webfiles
 fi
 
-echo doneeeeeeeeeeeeeee
-echo path: $path
 
-scp $path/* ocih:host/webserver/webfiles
 
 
