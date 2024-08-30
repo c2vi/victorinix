@@ -217,10 +217,7 @@ stdenv.mkDerivation {
 
   '' + webfilesBuildPhase closure-x86_64-linux
      + webfilesBuildPhase closure-aarch64-linux
-     # add my temporary Website to those webfiles uder /vic (the index file in webrun), because webrun in run on c2vi.dev.
-     + ''
-      cp ${self}/my-tmp-website.html $out/index.html
-     '';
+  ;
 
     #${pkgs.gnutar}/bin/tar -C ./nix-store -czf $out/tars/x86_64-linux.tar.gz .
 
