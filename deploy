@@ -15,7 +15,7 @@ else
 	echo doneeeeeeeeeeeeeee
 	echo path: $path
 
-	scp -r $path/* ocih:host/webserver/webfiles
+	scp -r $path/* ocih:host/data/my-website
 fi
 
 
