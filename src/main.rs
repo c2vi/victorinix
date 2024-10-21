@@ -18,7 +18,7 @@ mod elf_props;
 mod error;
 mod utils;
 mod victor;
-mod env_item;
+mod env_option;
 
 mod commands {
     pub mod info;
