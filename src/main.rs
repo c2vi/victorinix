@@ -12,9 +12,6 @@ use colored::Colorize;
 use log::{trace, debug, info, warn, error};
 use std::ffi::{c_char, CStr};
 
-use crate::elf_props::Props;
-
-mod elf_props;
 mod error;
 mod utils;
 mod victor;
@@ -41,9 +38,6 @@ fn main() {
 
     // log a message of every level, to test loging
     // test_logger();
-
-    // TODO
-    //let props = Props::from_exe_file();
 
     // match the subcommands
     let result = match cli_matches.subcommand() {
